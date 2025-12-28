@@ -1,31 +1,84 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "./ui/button"
 import { Github, ArrowRight } from "lucide-react"
+import { LightRays } from "@/components/ui/light-rays"
+import { motion } from "framer-motion"
 import IntegrationsSection from "./integration"
 
 export const HeroSection = () => {
     return (
-        <section className="min-h-screen bg-[#0a0a0a] flex items-center">
-            <div className="w-full max-w-7xl mx-auto px-8 py-32 pt-40">
+        <section className="min-h-screen bg-[#0a0a0a] flex items-center relative overflow-hidden">
+            {/* Background Light Rays */}
+            <LightRays className="z-0 opacity-40" />
+
+            {/* Background Grid */}
+            <div className="absolute inset-0 bg-[radial-gradient(#ffffff1a_1px,transparent_1px)] bg-size-[20px_20px] mask-[radial-gradient(ellipse_60%_60%_at_50%_50%,#000_10%,transparent_100%)] opacity-20 pointer-events-none z-0" />
+
+            {/* Background Gradient (Commented out to let LightRays shine) */}
+            {/* <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob" />
+            <div className="absolute top-0 -right-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000" />
+            <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000" /> */}
+
+            <div className="w-full max-w-7xl mx-auto px-8 py-32 pt-40 relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     {/* Left Side - Tagline, Subtitle, Buttons */}
-                    <div>
+                    <div className="flex flex-col items-start text-left">
                         {/* Tagline */}
-                        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight mb-8 bg-linear-to-r from-[#789fec] to-[#00008c] bg-clip-text text-transparent">
-                            Orchestrate.<br />
-                            Deliver.<br />
-                            Scale.
-                        </h1>
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, ease: "easeOut" }}
+                            className="mb-8"
+                        >
+                            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight">
+                                <motion.span
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.1, duration: 0.5 }}
+                                    className="block bg-linear-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent"
+                                >
+                                    Scalable.
+                                </motion.span>
+                                <motion.span
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.3, duration: 0.5 }}
+                                    className="block bg-linear-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent"
+                                >
+                                    Reliable.
+                                </motion.span>
+                                <motion.span
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.5, duration: 0.5 }}
+                                    className="block bg-linear-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent"
+                                >
+                                    Extensible.
+                                </motion.span>
+                            </h1>
+                        </motion.div>
 
                         {/* Subtitle */}
-                        <p className="text-lg md:text-xl text-[#a1a1aa] max-w-xl mb-12 leading-relaxed">
+                        <motion.p
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.7, duration: 0.6 }}
+                            className="text-lg md:text-xl text-zinc-400 max-w-xl mb-12 leading-relaxed"
+                        >
                             Plugin-based notification engine with exponential retries, crash recovery, and multi-channel support out of the box.
-                        </p>
+                        </motion.p>
 
                         {/* Buttons */}
-                        <div className="flex flex-row gap-4 items-center">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.9, duration: 0.6 }}
+                            className="flex flex-row gap-4 items-center"
+                        >
                             <Button
-                                className="bg-white text-black hover:bg-gray-100 px-6 py-5 text-base font-medium rounded-md transition-all duration-200"
+                                className="bg-white text-black hover:bg-zinc-200 px-8 py-6 text-lg font-medium rounded-xl transition-all duration-200 hover:scale-105"
                                 asChild
                             >
                                 <Link href="https://github.com/SimpleNotificationSystem/simplens-core">
@@ -35,21 +88,25 @@ export const HeroSection = () => {
                             </Button>
                             <Button
                                 variant="ghost"
-                                className="text-white hover:text-white hover:bg-transparent px-6 py-5 text-base font-medium"
+                                className="text-white hover:text-white hover:bg-white/10 px-8 py-6 text-lg font-medium rounded-xl transition-all duration-200 group"
                                 asChild
                             >
                                 <Link href="/docs">
                                     Get started
-                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                                 </Link>
                             </Button>
-                        </div>
+                        </motion.div>
                     </div>
 
                     {/* Right Side - Integration Section */}
-                    <div>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.5, duration: 0.8 }}
+                    >
                         <IntegrationsSection />
-                    </div>
+                    </motion.div>
                 </div>
             </div>
         </section>

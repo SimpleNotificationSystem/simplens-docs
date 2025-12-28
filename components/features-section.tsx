@@ -51,7 +51,7 @@ export const FeaturesSection = () => {
 
             <div className="max-w-6xl mx-auto relative z-10">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                    <h2 className="text-3xl md:text-5xl font-bold mb-6 bg-linear-to-r from-white to-gray-400 bg-clip-text text-transparent">
                         Built for Scale & Reliability
                     </h2>
                     <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">

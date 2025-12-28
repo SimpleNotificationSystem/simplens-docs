@@ -1,21 +1,24 @@
+"use client"
+
 import { cn } from '@/lib/utils'
 import { MessageCircle, Mail, Bell, Smartphone, Webhook, Slack } from 'lucide-react';
 import Image from "next/image"
+import { motion } from "framer-motion"
 
 export default function IntegrationsSection() {
     return (
-        <section    >
-            <div className="bg-[#0a0a0a] py-24 md:py-32">
+        <section>
+            <div className="bg-transparent py-24 md:py-32">
                 <div className="mx-auto max-w-5xl px-6">
                     <div className="relative mx-auto flex max-w-sm items-center justify-between">
                         <div className="space-y-6">
-                            <IntegrationCard position="left-top">
+                            <IntegrationCard position="left-top" delay={0.8}>
                                 <MessageCircle className="size-6 text-white" />
                             </IntegrationCard>
-                            <IntegrationCard position="left-middle">
+                            <IntegrationCard position="left-middle" delay={0.9}>
                                 <Mail className="size-6 text-white" />
                             </IntegrationCard>
-                            <IntegrationCard position="left-bottom">
+                            <IntegrationCard position="left-bottom" delay={1.0}>
                                 <Smartphone className="size-6 text-white" />
                             </IntegrationCard>
                         </div>
@@ -39,13 +42,13 @@ export default function IntegrationsSection() {
                             className="absolute inset-1/3 bg-[radial-gradient(var(--dots-color)_1px,transparent_1px)] opacity-50 [--dots-color:white] bg-size-[16px_16px] mask-[radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
 
                         <div className="space-y-6">
-                            <IntegrationCard position="right-top">
+                            <IntegrationCard position="right-top" delay={0.8}>
                                 <Bell className="size-6 text-white" />
                             </IntegrationCard>
-                            <IntegrationCard position="right-middle">
+                            <IntegrationCard position="right-middle" delay={0.9}>
                                 <Webhook className="size-6 text-white" />
                             </IntegrationCard>
-                            <IntegrationCard position="right-bottom">
+                            <IntegrationCard position="right-bottom" delay={1.0}>
                                 <Slack className="size-6 text-white" />
                             </IntegrationCard>
                         </div>
@@ -56,12 +59,39 @@ export default function IntegrationsSection() {
     )
 }
 
-const IntegrationCard = ({ children, className, position, isCenter = false }: { children: React.ReactNode; className?: string; position?: 'left-top' | 'left-middle' | 'left-bottom' | 'right-top' | 'right-middle' | 'right-bottom'; isCenter?: boolean }) => {
+const IntegrationCard = ({
+    children,
+    className,
+    position,
+    isCenter = false,
+    delay = 0
+}: {
+    children: React.ReactNode;
+    className?: string;
+    position?: 'left-top' | 'left-middle' | 'left-bottom' | 'right-top' | 'right-middle' | 'right-bottom';
+    isCenter?: boolean;
+    delay?: number;
+}) => {
     return (
-        <div className={cn('bg-[#18181b] relative flex size-12 rounded-xl border border-[#27272a] text-white', className)}>
-            <div className={cn('relative z-20 m-auto size-fit *:size-6', isCenter && '*:size-8')}>{children}</div>
+        <div className={cn('relative flex z-10', isCenter ? 'size-16' : 'size-12')}>
+            {/* Card Body */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: isCenter ? 0 : delay, duration: 0.5, ease: "easeOut" }}
+                className={cn('relative z-20 flex size-full items-center justify-center rounded-xl border border-[#27272a] bg-[#18181b] text-white', className)}
+            >
+                <div className={cn('relative z-20 m-auto size-fit *:size-6', isCenter && '*:size-8')}>{children}</div>
+            </motion.div>
+
+            {/* Connecting Lines */}
             {position && !isCenter && (
-                <div
+                <motion.div
+                    initial={{ clipPath: position.startsWith('left') ? 'inset(0 0 0 100%)' : 'inset(0 100% 0 0)' }}
+                    whileInView={{ clipPath: 'inset(0 0 0 0)' }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.4, duration: 0.6, ease: "easeInOut" }}
                     className={cn(
                         'bg-linear-to-r to-white/50 absolute z-10 h-px',
                         position === 'left-top' && 'left-full top-1/2 w-[130px] origin-left rotate-25',
