@@ -195,14 +195,14 @@ const PluginsVisual = () => (
                     className={cn(
                         "flex flex-col items-center gap-1 rounded-xl border p-3",
                         plugin.active
-                            ? "bg-green-500/10 border-green-500/30"
+                            ? "bg-blue-500/10 border-blue-500/30"
                             : "bg-zinc-800 border-zinc-700"
                     )}
                 >
                     <span className="text-lg">{plugin.icon}</span>
                     <div className={cn(
                         "h-1.5 w-1.5 rounded-full",
-                        plugin.active ? "bg-green-500" : "bg-zinc-600"
+                        plugin.active ? "bg-blue-500" : "bg-zinc-600"
                     )} />
                 </motion.div>
             ))}
