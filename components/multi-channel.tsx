@@ -258,13 +258,6 @@ export const MultiChannelSection = () => {
                             Build a Plugin
                         </Link>
                     </Button>
-                    <Link
-                        href="/docs/sdk"
-                        className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors"
-                    >
-                        Read SDK Docs
-                        <ArrowRight className="h-4 w-4" />
-                    </Link>
                 </motion.div>
 
                 {/* Trust Badge */}
