@@ -19,74 +19,94 @@ export const Header = () => {
 
     return (
         <>
-            <div className="fixed top-6 inset-x-0 w-full max-w-2xl mx-auto z-50 px-4">
-                <nav className="bg-black/50 backdrop-blur-md border border-white/10 rounded-full p-2 pl-6 pr-2 flex justify-between items-center shadow-lg shadow-black/10">
+            <div className="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-black/40 backdrop-blur-md">
+                <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2 mr-4">
+                    <Link href="/" className="flex items-center gap-2">
                         <Image
                             src="/SimpleNSLogo.png"
-                            height={120}
-                            width={120}
+                            height={100}
+                            width={100}
                             alt="SimpleNS Logo"
+                            className="h-8 w-auto"
                         />
                     </Link>
 
-                    {/* Desktop Navigation Links (Spotlight) */}
-                    <div className="hidden md:flex flex-row relative gap-4 justify-center items-center w-[80%]">
+                    {/* Desktop Navigation Links */}
+                    <nav className="hidden md:flex items-center gap-6">
                         {navLinks.map((link, index) => (
                             <Link
                                 key={link.href}
                                 href={link.href}
                                 onMouseEnter={() => setHoveredIndex(index)}
                                 onMouseLeave={() => setHoveredIndex(null)}
-                                className="relative px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
+                                className="relative text-sm font-medium text-zinc-400 transition-colors hover:text-white"
                             >
+                                {link.label}
                                 {hoveredIndex === index && (
                                     <motion.span
                                         layoutId="nav-pill"
-                                        className="absolute inset-0 bg-white/10 rounded-full -z-10"
+                                        className="absolute -inset-x-3 -inset-y-2 -z-10 rounded-full bg-white/5"
                                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                     />
                                 )}
-                                {link.label}
                             </Link>
                         ))}
+                    </nav>
+
+                    {/* Right Actions */}
+                    <div className="hidden items-center gap-4 md:flex">
+                        <Link
+                            href="https://github.com/SimpleNotificationSystem/simplens-core"
+                            target="_blank"
+                            className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+                        >
+                            <Github className="h-5 w-5" />
+                        </Link>
+
+                        <div className="h-4 w-px bg-white/10" />
+                        <Button className="bg-white text-black hover:bg-zinc-200">
+                            Get Started
+                        </Button>
                     </div>
 
                     {/* Mobile Menu Button */}
                     <button
-                        className="md:hidden ml-auto p-2 text-white"
+                        className="md:hidden p-2 text-zinc-400 hover:text-white"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         aria-label="Toggle menu"
                     >
                         {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
-                </nav>
+                </div>
             </div>
 
             {/* Mobile Menu Overlay */}
             {isMenuOpen && (
-                <div className="md:hidden fixed inset-0 top-0 bg-black/95 z-40 flex flex-col items-center pt-32 space-y-8">
+                <div className="fixed inset-0 top-16 z-40 flex flex-col items-center bg-black/95 pt-8 space-y-8 md:hidden">
                     {navLinks.map((link) => (
                         <Link
                             key={link.href}
                             href={link.href}
-                            className="text-white text-xl hover:text-gray-300 transition-colors"
+                            className="text-lg font-medium text-zinc-400 hover:text-white transition-colors"
                             onClick={() => setIsMenuOpen(false)}
                         >
                             {link.label}
                         </Link>
                     ))}
                     <div className="h-px w-12 bg-white/10" />
-                    <Button
-                        className="bg-white text-black hover:bg-gray-100 rounded-full px-8"
-                        asChild
-                    >
-                        <Link href="https://github.com/SimpleNotificationSystem/simplens-core">
-                            <Github className="mr-2 h-4 w-4" />
-                            Star on GitHub
+                    <div className="flex flex-col justify-center items-center gap-5">
+                        <Link
+                            href="https://github.com/SimpleNotificationSystem/simplens-core"
+                            target="_blank"
+                            className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+                        >
+                            <Github className="h-5 w-5" />
                         </Link>
-                    </Button>
+                        <Button className="bg-white text-black hover:bg-zinc-200">
+                            Get Started
+                        </Button>
+                    </div>
                 </div>
             )}
         </>

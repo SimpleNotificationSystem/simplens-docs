@@ -37,7 +37,7 @@ export const HeroSection = () => {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.1, duration: 0.5 }}
-                                    className="block bg-linear-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent"
+                                    className="block bg-linear-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent"
                                 >
                                     Scalable.
                                 </motion.span>
@@ -45,7 +45,7 @@ export const HeroSection = () => {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.3, duration: 0.5 }}
-                                    className="block bg-linear-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent"
+                                    className="block bg-linear-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent"
                                 >
                                     Reliable.
                                 </motion.span>
@@ -53,7 +53,7 @@ export const HeroSection = () => {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: 0.5, duration: 0.5 }}
-                                    className="block bg-linear-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent"
+                                    className="block bg-linear-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent"
                                 >
                                     Extensible.
                                 </motion.span>
@@ -75,20 +75,19 @@ export const HeroSection = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.9, duration: 0.6 }}
-                            className="flex flex-row gap-4 items-center"
+                            className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center w-full sm:w-auto"
                         >
                             <Button
-                                className="bg-white text-black hover:bg-zinc-200 px-8 py-6 text-lg font-medium rounded-xl transition-all duration-200 hover:scale-105"
+                                className="bg-white text-black hover:bg-zinc-200 px-6 py-5 sm:px-8 sm:py-6 text-base sm:text-lg font-medium rounded-xl transition-all duration-200 hover:scale-105"
                                 asChild
                             >
                                 <Link href="https://github.com/SimpleNotificationSystem/simplens-core">
-                                    <Github className="mr-2 h-5 w-5" />
                                     Star on GitHub
                                 </Link>
                             </Button>
                             <Button
                                 variant="ghost"
-                                className="text-white hover:text-white hover:bg-white/10 px-8 py-6 text-lg font-medium rounded-xl transition-all duration-200 group"
+                                className="text-white hover:text-white hover:bg-white/10 px-6 py-5 sm:px-8 sm:py-6 text-base sm:text-lg font-medium rounded-xl transition-all duration-200 group"
                                 asChild
                             >
                                 <Link href="/docs">

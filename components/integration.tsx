@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from '@/lib/utils'
-import { MessageCircle, Mail, Bell, Smartphone, Webhook, Slack } from 'lucide-react';
+import { MessageCircle, Mail, Bell, Smartphone, Slack, WebhookIcon } from 'lucide-react';
 import Image from "next/image"
 import { motion } from "framer-motion"
 
@@ -46,7 +46,7 @@ export default function IntegrationsSection() {
                                 <Bell className="size-6 text-white" />
                             </IntegrationCard>
                             <IntegrationCard position="right-middle" delay={0.9}>
-                                <Webhook className="size-6 text-white" />
+                                <WebhookIcon className="size-6 text-white" />
                             </IntegrationCard>
                             <IntegrationCard position="right-bottom" delay={1.0}>
                                 <Slack className="size-6 text-white" />
