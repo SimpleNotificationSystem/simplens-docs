@@ -82,7 +82,7 @@ const ShieldVisual = () => (
                 transition={{ duration: 0.5, delay: 0.5, type: "spring" }}
                 className="relative"
             >
-                <div className="h-14 w-14 md:h-16 md:w-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <div className="h-14 w-14 md:h-16 md:w-16 rounded-2xl bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
                     <svg className="h-7 w-7 md:h-8 md:w-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                     </svg>
@@ -252,7 +252,7 @@ const ScaleVisual = () => (
                                 whileInView={{ opacity: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.5 + j * 0.1 }}
-                                className="h-6 w-10 rounded-sm bg-gradient-to-r from-blue-600 to-blue-500 border border-blue-400/30"
+                                className="h-6 w-10 rounded-sm bg-linear-to-r from-blue-600 to-blue-500 border border-blue-400/30"
                             />
                         ))}
                     </div>
