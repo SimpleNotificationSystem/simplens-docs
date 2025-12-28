@@ -6,6 +6,7 @@ import { HowItWorksSection } from "@/components/how-it-works";
 import { MultiChannelSection } from "@/components/multi-channel";
 import { DashboardSection } from "@/components/dashboard-section";
 import { WhySimpleNSSection } from "@/components/why-simplens";
+import { UseCasesSection } from "@/components/use-cases";
 
 export default function Home() {
   return (
@@ -17,6 +18,7 @@ export default function Home() {
       <MultiChannelSection />
       <DashboardSection />
       <WhySimpleNSSection />
+      <UseCasesSection />
     </>
   );
 }
