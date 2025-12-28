@@ -8,6 +8,7 @@ import { DashboardSection } from "@/components/dashboard-section";
 import { WhySimpleNSSection } from "@/components/why-simplens";
 import { UseCasesSection } from "@/components/use-cases";
 import { FAQSection } from "@/components/faq-section";
+import { Footer } from "@/components/footer";
 
 export default function Home() {
   return (
@@ -21,6 +22,7 @@ export default function Home() {
       <WhySimpleNSSection />
       <UseCasesSection />
       <FAQSection />
+      <Footer />
     </>
   );
 }

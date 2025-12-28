@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "./ui/button"
-import { Github, ArrowRight } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { LightRays } from "@/components/ui/light-rays"
 import { motion } from "framer-motion"
 import IntegrationsSection from "./integration"
@@ -15,11 +15,6 @@ export const HeroSection = () => {
 
             {/* Background Grid */}
             <div className="absolute inset-0 bg-[radial-gradient(#ffffff1a_1px,transparent_1px)] bg-size-[20px_20px] mask-[radial-gradient(ellipse_60%_60%_at_50%_50%,#000_10%,transparent_100%)] opacity-20 pointer-events-none z-0" />
-
-            {/* Background Gradient (Commented out to let LightRays shine) */}
-            {/* <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob" />
-            <div className="absolute top-0 -right-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000" />
-            <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000" /> */}
 
             <div className="w-full max-w-7xl mx-auto px-8 py-32 pt-40 relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -67,7 +62,7 @@ export const HeroSection = () => {
                             transition={{ delay: 0.7, duration: 0.6 }}
                             className="text-lg md:text-xl text-zinc-400 max-w-xl mb-12 leading-relaxed"
                         >
-                            Plugin-based notification engine with exponential retries, crash recovery, and multi-channel support out of the box.
+                            Open-source plugin-based notification orchestration engine for developers who value control.
                         </motion.p>
 
                         {/* Buttons */}
