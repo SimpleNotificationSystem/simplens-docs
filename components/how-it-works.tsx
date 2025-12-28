@@ -126,7 +126,7 @@ const CodeSnippetVisual = () => (
 const QueueingVisual = () => (
     <div className="flex flex-wrap gap-2">
         {[
-            { label: "MongoDB Outbox", color: "bg-green-500/20 text-green-400 border-green-500/30" },
+            { label: "MongoDB", color: "bg-green-500/20 text-green-400 border-green-500/30" },
             { label: "Kafka Streaming", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
             { label: "Redis Scheduling", color: "bg-red-500/20 text-red-400 border-red-500/30" },
             { label: "Guaranteed Delivery", color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
