@@ -5,6 +5,7 @@ description: Understanding SimpleNS's system architecture, components, and desig
 
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
 
 ## High-Level Architecture
 
@@ -40,8 +41,8 @@ SimpleNS follows an event-driven, microservices-inspired architecture where each
 **Responsibility:** REST API for notification ingestion
 
 **Key Features:**
-- `/api/notification` - Single notification endpoint
-- `/api/notification/batch` - Bulk notifications (max-limit per request configurable in (.env)) 
+- `/api/notification` - Send a single notification to a single recipient through multiple channels
+- `/api/notification/batch` - Send the same notification to multiple recipients through multiple channels (max-limit per request configurable in (.env)) 
 - Request validation using Zod schemas
 - Bearer token authentication
 
@@ -53,11 +54,11 @@ SimpleNS follows an event-driven, microservices-inspired architecture where each
 
 <Steps>
 <Step>
-Receives HTTP POST request
+Receives HTTP POST request to `/api/notification` or `/api/notification/batch` endpoints
 </Step>
 
 <Step>
-Validates authentication and payload
+Validates authentication using configured `NS_API_KEY` and payload using zod schema
 </Step>
 
 <Step>
@@ -67,7 +68,7 @@ Writes to MongoDB in transaction:
 </Step>
 
 <Step>
-Returns 202 Accepted with `notification_id`
+Returns **HTTP 202 Accepted** Status if notification is accepted for processing or returns a **HTTP 409 Conflict** if already the same (request_id + channel) exists in notification collection 
 </Step>
 
 <Step>
@@ -77,15 +78,16 @@ Background worker picks up from outbox
 
 ### Background Worker
 
-**Responsibility:** Polls outbox, publishes to Kafka, updates status
+**Responsibility:** Polls outbox, polls outbox_status, publishes to Kafka, updates status
 
 **Key Features:**
 - Polls MongoDB outbox table every 5 seconds (configurable)
-- Publishes notifications to appropriate Kafka topics
+- Publishes notifications from outbox collection to appropriate Kafka topics
 - Consumes status updates from notification_status kafka topic
 - Updates notification status in MongoDB
 - Sends webhook callbacks
 - Handles worker crashes via claim timeouts
+- Polls MongoDB Outobx Status collection every 5 seconds (configurable) and publishes status to notification_status kafka topic. (Auto resolution of ghost deliveries)
 
 **Technology:** Node.js, MongoDB, Kafka Producer/Consumer
 
@@ -117,7 +119,7 @@ Marks outbox entry as published
 </Step>
 
 <Step>
-Consumes status updates and updates MongoDB
+Consumes status updates from `notification_status` topic and updates `outbox` and `notification` collections in MongoDB
 </Step>
 
 <Step>
@@ -125,15 +127,27 @@ Sends webhooks (if configured)
 </Step>
 </Steps>
 
+**Ghost Delivery Status Update Flow**
+<Steps>
+<Step>
+Polls `status_outbox` collection for unprocessed events
+</Step>
+<Step>
+Publishes status to `notification_status` topic
+</Step>
+</Steps>
+
 ### Unified Notification Processor
 
-**Responsibility:** Plugin-based notification delivery with rate limiting
+**Responsibility:** Plugin-based notification delivery with rate limiting and automatic fallback
 
 **Key Features:**
 - Loads plugins from `.plugins/` directory based on `simplens.config.yaml`
 - Consumes from channel-specific Kafka topics
 - Per-provider rate limiting (Token Bucket Algorithm)
 - Exponential backoff retries (configurable, default: 5 attempts)
+- **Automatic fallback to secondary provider** when default provider fails with non-retryable error
+- Schema validation against fallback provider before attempting
 - Idempotency using Redis cache
 - Processing locks via Redis (TTL: 2 minutes)
 - Publishes delivery status to `notification_status` topic
@@ -152,6 +166,16 @@ PROCESSOR_CHANNEL=all  # or 'email', 'sms', etc.
 MAX_RETRY_COUNT=5
 PROCESSING_TTL_SECONDS=120
 ```
+
+**Fallback Provider Logic:**
+1. Try default provider for channel
+2. If fails with **non-retryable error**, validate against fallback provider schema
+3. If validation passes, try fallback provider
+4. If fallback fails or both fail, mark as `failed`
+
+<Callout type="info">
+If the error is **retryable** (e.g., rate limit, timeout), SimpleNS retries with the same provider using exponential backoff instead of falling back.
+</Callout>
 
 **Data Flow:**
 
@@ -177,7 +201,10 @@ Validates notification against plugin schema
 </Step>
 
 <Step>
-Calls `plugin.send(notification)`
+Calls `sendWithFallback(channel, notification)`:
+- Tries default provider first
+- On non-retryable failure, validates against fallback provider schema
+- Tries fallback provider if available
 </Step>
 
 <Step>
@@ -185,7 +212,9 @@ On success: Publish `delivered` status
 </Step>
 
 <Step>
-On failure: Calculate backoff, republish to Kafka for retry, or mark `failed`
+On failure:
+- If retryable: Calculate backoff, publish to `delayed_notification` topic for retry
+- If non-retryable or max retries exceeded: Mark `failed`
 </Step>
 
 <Step>
@@ -195,18 +224,28 @@ Release lock, update idempotency cache
 
 ### Delayed Processor
 
-**Responsibility:** Handles scheduled notifications
+**Responsibility:** Handles scheduled notifications using two-phase commit
 
 **Key Features:**
 - Redis ZSET-based delay queue (score = Unix timestamp)
+- **Two-phase commit** prevents message loss during crashes
 - Polls every 1 second for due notifications (configurable)
 - Fetches batch of due notifications (default: 10)
 - Publishes to appropriate channel topics
-- Handles poller failures with retries
+- Handles poller failures with retries and exponential backoff
 
-**Technology:** Node.js, Redis ZSET, Kafka Producer
+**Two-Phase Commit Implementation:**
+1. **Claim Phase:** Atomically lock events for this worker using `SET NX` (prevents duplicate processing)
+2. **Process Phase:** Publish to target Kafka topic
+3. **Confirm Phase:** Remove from queue ONLY after successful publish
 
-**Scaling:** Multiple Delayed Processor instances (Two-Phase Commit)
+<Callout type="warn">
+If a worker crashes between claim and confirm, the claim expires after 60 seconds and another worker can pick up the event.
+</Callout>
+
+**Technology:** Node.js, Redis ZSET + Lua Scripts, Kafka Producer
+
+**Scaling:** Multiple Delayed Processor instances (distributed claiming prevents duplicates)
 
 **Data Flow:**
 
@@ -220,21 +259,31 @@ Delayed processor consumes, extracts `scheduled_at`
 </Step>
 
 <Step>
-Adds to Redis ZSET: `ZADD delay_queue <timestamp> <notification_id>`
+Adds to Redis ZSET: `ZADD delay_queue <timestamp> <notification_json>`
 </Step>
 
 <Step>
-Poller checks Redis: `ZRANGEBYSCORE delay_queue -inf <now> LIMIT 0 10`
+Poller runs every 1 second:
+- **Claim:** Uses Lua script to atomically find due events and lock them with worker ID
+- `ZRANGEBYSCORE delay_queue -inf <now> LIMIT 0 10`
+- `SET delayed_claim:<notification_id> <worker_id> NX EX 60`
 </Step>
 
 <Step>
-For each due notification:
-- Publishes to channel topic (e.g., `email_notification`)
-- Removes from delay queue
+For each claimed event:
+- **Process:** Publishes payload to channel topic (e.g., `email_notification`)
+- **Confirm:** Removes from queue and clears claim (only if worker still holds claim)
 </Step>
 
 <Step>
-Unified processor picks up and delivers
+On publish failure:
+- Increments poller retry count
+- Re-adds to queue with exponential backoff (5s, 10s, 20s, 40s, max 60s)
+- If max retries exceeded, publishes `failed` status
+</Step>
+
+<Step>
+Unified processor picks up from channel topic and delivers
 </Step>
 </Steps>
 
@@ -255,7 +304,8 @@ Unified processor picks up and delivers
 **Scaling:** Single instance (uses distributed locks for multi-instance support)
 
 **Alert Types:**
-- `orphaned_processing` - Notification processing lock expired
+- `ghost_delivery` - Status mismatch between Redis and MongoDB (notification delivered but status not updated)
+- `stuck_processing` - Notification stuck in processing state beyond threshold
 - `orphaned_pending` - Notification never picked up by processor
 
 **Data Flow:**
@@ -324,26 +374,6 @@ Admin can manually retry or resolve
   - `alerts` - Recovery alerts
   - `status_outbox` - Status update outbox
 - Indexes for performance on `status`, `created_at`, `notification_id`
-
-**Data Model:**
-
-```javascript
-// Notification
-{
-  notification_id: "mongoose object_id",
-  request_id: "uuid",
-  client_id: "uuid",
-  channel: ["email"],
-  recipient: { user_id: "u1", email: "test@example.com" },
-  content: { email: { subject: "...", message: "..." } },
-  status: "pending",  // pending, processing, delivered, failed
-  scheduled_at: ISODate("..."),
-  webhook_url: "https://...",
-  created_at: ISODate("..."),
-  updated_at: ISODate("..."),
-  retry_count: 0
-}
-```
 
 ### Kafka
 
@@ -414,251 +444,20 @@ SET processing:<notification_id> <worker_id> EX 120
 
 ### Immediate Notification Flow
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API
-    participant MongoDB
-    participant Worker
-    participant Kafka
-    participant Processor
-    participant Plugin
-    participant Provider
-
-    Client->>API: POST /api/notification
-    API->>API: Validate request
-    API->>MongoDB: Write notification + outbox
-    API->>Client: 202 Accepted
-    Worker->>MongoDB: Poll outbox
-    Worker->>Kafka: Publish to email_notification
-    Processor->>Kafka: Consume message
-    Processor->>Processor: Check idempotency (Redis)
-    Processor->>Processor: Acquire lock (Redis)
-    Processor->>Processor: Rate limit check
-    Processor->>Plugin: plugin.send()
-    Plugin->>Provider: API call
-    Provider->>Plugin: Success/Failure
-    Plugin->>Processor: Return result
-    Processor->>Kafka: Publish status
-    Worker->>Kafka: Consume status
-    Worker->>MongoDB: Update status
-    Worker->>Client: Webhook POST
-```
-
-**Step-by-step:**
-
-<Steps>
-<Step>
-Client → POST `/api/notification`
-</Step>
-
-<Step>
-API validates, writes to MongoDB (notification + outbox)
-</Step>
-
-<Step>
-API returns 202 Accepted
-</Step>
-
-<Step>
-Worker polls outbox
-</Step>
-
-<Step>
-Worker publishes to Kafka (`email_notification` topic)
-</Step>
-
-<Step>
-Processor consumes from Kafka
-</Step>
-
-<Step>
-Processor checks idempotency (Redis)
-</Step>
-
-<Step>
-Processor acquires lock (Redis)
-</Step>
-
-<Step>
-Processor checks rate limit
-</Step>
-
-<Step>
-Processor calls `plugin.send()`
-</Step>
-
-<Step>
-Plugin delivers via provider API
-</Step>
-
-<Step>
-Processor publishes status to Kafka (`notification_status` topic)
-</Step>
-
-<Step>
-Worker consumes status update
-</Step>
-
-<Step>
-Worker updates MongoDB (status = delivered)
-</Step>
-
-<Step>
-Worker sends webhook POST (if configured)
-</Step>
-</Steps>
+![Immediate Notification Flow](/ImmediateNotificationFlow.png)
 
 ### Scheduled Notification Flow
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API
-    participant Worker
-    participant Kafka
-    participant DelayedProc as Delayed Processor
-    participant Redis
-    participant Processor
-
-    Client->>API: POST /api/notification (scheduled_at)
-    API->>API: Write to MongoDB + outbox
-    Worker->>Kafka: Publish to delayed_notification
-    DelayedProc->>Kafka: Consume message
-    DelayedProc->>Redis: ZADD delay_queue timestamp notification
-    loop Every 1 second
-        DelayedProc->>Redis: ZRANGEBYSCORE (check due)
-        Redis->>DelayedProc: Due notifications
-        DelayedProc->>Kafka: Publish to email_notification
-        DelayedProc->>Redis: Remove from delay_queue
-    end
-    Processor->>Kafka: Consume (continues as immediate flow)
-```
-
-**Step-by-step:**
-
-<Steps>
-<Step>
-Client → POST `/api/notification` (with `scheduled_at`)
-</Step>
-
-<Step>
-API writes to MongoDB + outbox
-</Step>
-
-<Step>
-Worker publishes to `delayed_notification` topic
-</Step>
-
-<Step>
-Delayed processor consumes, adds to Redis ZSET
-</Step>
-
-<Step>
-Delayed processor polls Redis for due notifications
-</Step>
-
-<Step>
-When due, publishes to `email_notification` topic
-</Step>
-
-<Step>
-Continues as immediate flow from step 6
-</Step>
-</Steps>
+![Scheduled Notification Flow](/ScheduledNotificationFlow.png)
 
 ### Retry Flow
 
-```mermaid
-flowchart TD
-    A[Processor calls plugin.send] --> B{Success?}
-    B -->|Yes| C[Publish delivered status]
-    B -->|No| D[Increment retry_count]
-    D --> E{retry_count < MAX?}
-    E -->|Yes| F[Calculate exponential backoff]
-    F --> G[Re-publish to Kafka with delay]
-    G --> A
-    E -->|No| H[Publish failed status]
-    H --> I[Worker updates MongoDB]
-```
-
-**Step-by-step:**
-
-<Steps>
-<Step>
-Processor calls `plugin.send()`
-</Step>
-
-<Step>
-Plugin returns `{ success: false, error: "..." }`
-</Step>
-
-<Step>
-Processor increments `retry_count`
-</Step>
-
-<Step>
-If `retry_count < MAX_RETRY_COUNT`:
-- Calculate backoff delay (exponential)
-- Re-publish to same Kafka topic (with delay via Redis)
-- Repeat from step 1
-</Step>
-
-<Step>
-Else:
-- Publish status = `failed`
-- Worker updates MongoDB
-</Step>
-</Steps>
+![Retry Flow](/RetryFlow.png)
 
 ### Recovery Flow
 
-```mermaid
-flowchart TD
-    A[Recovery Service: Scan MongoDB] --> B{Find stuck notifications?}
-    B -->|Yes| C[Create alert in MongoDB]
-    C --> D[Dashboard queries alerts]
-    D --> E[Admin views alert]
-    E --> F[Admin clicks Retry]
-    F --> G[API re-publishes notification]
-    G --> H[Re-enters processing flow]
-    B -->|No| I[Wait 60 seconds]
-    I --> A
-```
+![Recovery Flow](/RecoveryFlow.png)
 
-**Step-by-step:**
-
-<Steps>
-<Step>
-Recovery service scans MongoDB (every 60s)
-</Step>
-
-<Step>
-Finds notifications where:
-- `status = processing` AND `updated_at > 5 min ago`
-- `status = pending` AND `updated_at > 5 min ago`
-</Step>
-
-<Step>
-Creates alert in MongoDB
-</Step>
-
-<Step>
-Dashboard queries alerts collection
-</Step>
-
-<Step>
-Admin views alert, clicks "Retry"
-</Step>
-
-<Step>
-Dashboard calls API to re-publish notification
-</Step>
-
-<Step>
-Notification re-enters processing flow
-</Step>
-</Steps>
 
 ## Scalability Model
 
@@ -710,7 +509,9 @@ docker-compose up -d --scale notification-processor=5
 # Update .env
 EMAIL_PARTITION=10
 
-# Recreate topic (or use kafka-topics.sh to add partitions)
+# Use kafka-topics.sh to add partitions
+bin/kafka-topics.sh --bootstrap-server <broker_host>:<port> --topic <topic_name> --alter --partitions <new_total_number>
+
 ```
 
 **Processor per Channel:**
@@ -718,8 +519,8 @@ EMAIL_PARTITION=10
 ```bash
 # Instead of PROCESSOR_CHANNEL=all
 # Run separate processors:
-docker-compose up -d notification-processor-email
-docker-compose up -d notification-processor-sms
+PROCESSOR_CHANNEL=email #update in .env
+docker-compose up -d notification-processor
 ```
 
 ### Performance Considerations
@@ -756,7 +557,3 @@ docker-compose up -d notification-processor-sms
 
 </Tab>
 </Tabs>
-
----
-
-**Next:** [Core Concepts](./Core-Concepts.md) - Understand key design patterns

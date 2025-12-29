@@ -7,27 +7,6 @@ import { Callout } from 'fumadocs-ui/components/callout';
 import { Steps, Step } from 'fumadocs-ui/components/steps';
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
-## System Requirements
-
-### Minimum Requirements
-
-- **CPU**: 2 cores
-- **RAM**: 4GB
-- **Disk**: 10GB available space
-- **OS**: Linux, macOS, or Windows (with WSL2)
-- **Docker**: 20.10+
-- **Docker Compose**: 2.0+
-
-### Recommended for Production
-
-- **CPU**: 4+ cores
-- **RAM**: 8GB+
-- **Disk**: 20GB+ SSD
-- **OS**: Linux (Ubuntu 20.04+, CentOS 8+, Debian 11+)
-- **Network**: Stable connection for plugin downloads
-
----
-
 ## Installation Methods
 
 ### Docker Compose (Recommended)
@@ -36,7 +15,7 @@ Docker Compose setup includes all infrastructure services and application compon
 
 <Steps>
 
-### Install Prerequisites
+#### Install Prerequisites
 
 <Tabs items={['Linux', 'macOS', 'Windows']}>
   <Tab value="Linux">
@@ -115,14 +94,14 @@ Docker Compose setup includes all infrastructure services and application compon
   </Tab>
 </Tabs>
 
-### Clone Repository
+#### Clone Repository
 
 ```bash
 git clone https://github.com/SimpleNotificationSystem/simplens-core.git
 cd simplens-core
 ```
 
-### Configure Environment
+#### Configure Environment
 
 ```bash
 # Create environment file
@@ -152,13 +131,13 @@ PORT=3000
 DASHBOARD_PORT=3002
 ```
 
-### Install Dependencies
+#### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### Install a Plugin
+#### Install a Plugin
 
 Install at least one notification provider plugin:
 
@@ -206,7 +185,7 @@ Install at least one notification provider plugin:
   </Tab>
 </Tabs>
 
-### Build and Start Services
+#### Build and Start Services
 
 ```bash
 # Build Docker images
@@ -223,7 +202,7 @@ docker-compose logs -f
 This starts: MongoDB, Kafka, Redis, Loki, Grafana, API Server, Background Worker, Notification Processor, Delayed Processor, Recovery Service, and Admin Dashboard.
 </Callout>
 
-### Wait for Services to be Healthy
+#### Wait for Services to be Healthy
 
 ```bash
 # Check service status
@@ -236,7 +215,7 @@ docker-compose ps
 MongoDB replica set initialization takes ~30-60 seconds. Wait for the `mongo` service to be healthy before expecting other services to function.
 </Callout>
 
-### Verify Installation
+#### Verify Installation
 
 Check that the API server is running:
 
@@ -266,7 +245,7 @@ This method is for advanced users who want to run services locally without Docke
 
 <Steps>
 
-### Install Infrastructure
+#### Install Infrastructure
 
 **MongoDB** (with replica set):
 
@@ -322,7 +301,7 @@ wget https://raw.githubusercontent.com/grafana/loki/main/cmd/loki/loki-local-con
 ./loki-linux-amd64 -config.file=loki-local-config.yaml
 ```
 
-### Configure for Local Development
+#### Configure for Local Development
 
 Edit `.env`:
 
@@ -344,7 +323,7 @@ NS_API_KEY=<your-key>
 # ... rest of config
 ```
 
-### Run Services
+#### Run Services
 
 ```bash
 # Install dependencies
