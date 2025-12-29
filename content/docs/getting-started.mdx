@@ -6,6 +6,7 @@ description: Get SimpleNS up and running in 5 minutes. This guide will walk you 
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Steps, Step } from 'fumadocs-ui/components/steps';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Card, Cards } from 'fumadocs-ui/components/card';
 
 ## Prerequisites
 
@@ -197,11 +198,23 @@ You've successfully sent your first notification through SimpleNS.
 
 ### Explore Further
 
-- **[Dashboard Features](./admin-dashboard)**: Learn about monitoring, retries, and alerts
-- **[API Reference](./api-reference)**: Explore all API endpoints and options
-- **[Scheduled Notifications](./core-concepts#scheduled-delivery)**: Queue notifications for future delivery
-- **[Webhooks](./core-concepts#webhooks)**: Get real-time status updates
-- **[Multi-Channel](./api-reference#multi-channel-requests)**: Send via email and SMS simultaneously
+<Cards>
+  <Card title="📊 Dashboard Features" href="./admin-dashboard">
+    Learn about monitoring, retries, and alerts
+  </Card>
+  <Card title="📖 API Reference" href="./api-reference">
+    Explore all API endpoints and options
+  </Card>
+  <Card title="⏰ Scheduled Notifications" href="./core-concepts#scheduled-delivery">
+    Queue notifications for future delivery
+  </Card>
+  <Card title="🔔 Webhooks" href="./core-concepts#webhooks">
+    Get real-time status updates
+  </Card>
+  <Card title="📡 Multi-Channel" href="./api-reference#multi-channel-requests">
+    Send via email and SMS simultaneously
+  </Card>
+</Cards>
 
 ### Install More Plugins
 
@@ -264,16 +277,20 @@ For more issues, see [Troubleshooting Guide](./troubleshooting).
 
 Once running, you can access:
 
-<div className="overflow-x-auto">
-
-| Service | URL | Purpose |
-|---------|-----|---------|
-| API Server | http://localhost:3000 | Notification API |
-| Admin Dashboard | http://localhost:3002 | Monitoring & management |
-| Grafana | http://localhost:3001 | Log visualization |
-| Kafka UI | http://localhost:8080 | Kafka topic monitoring |
-
-</div>
+<Cards>
+  <Card title="🖥️ API Server" href="http://localhost:3000">
+    Notification API - Port 3000
+  </Card>
+  <Card title="📊 Admin Dashboard" href="http://localhost:3002">
+    Monitoring & management - Port 3002
+  </Card>
+  <Card title="📈 Grafana" href="http://localhost:3001">
+    Log visualization - Port 3001
+  </Card>
+  <Card title="📨 Kafka UI" href="http://localhost:8080">
+    Kafka topic monitoring - Port 8080
+  </Card>
+</Cards>
 
 ---
 

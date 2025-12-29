@@ -6,6 +6,8 @@ description: Detailed installation instructions for different environments and d
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Steps, Step } from 'fumadocs-ui/components/steps';
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { File, Folder, Files } from 'fumadocs-ui/components/files';
 
 ## Installation Methods
 
@@ -446,15 +448,17 @@ npm run plugin:uninstall @simplens/nodemailer-gmail
 
 Plugins are installed in `.plugins/node_modules/`:
 
-```
-.plugins/
-├── package.json       # Plugin dependencies
-└── node_modules/
-    ├── @simplens/
-    │   ├── nodemailer-gmail/
-    │   └── mock/
-    └── ... (dependencies)
-```
+<Files>
+  <Folder name=".plugins" defaultOpen>
+    <File name="package.json" />
+    <Folder name="node_modules" defaultOpen>
+      <Folder name="@simplens" defaultOpen>
+        <Folder name="nodemailer-gmail" />
+        <Folder name="mock" />
+      </Folder>
+    </Folder>
+  </Folder>
+</Files>
 
 <Callout type="warn" title="Important">
 Don't modify `.plugins/` manually. Always use the plugin management scripts.
@@ -548,11 +552,23 @@ See [Deployment Guide](./deployment) for production setup.
 
 ### Next Steps
 
-- **Configure Plugins**: Add more notification channels
-- **Explore API**: Try [batch notifications](./api-reference#batch-endpoint)
-- **Set up Webhooks**: Get [real-time status updates](./core-concepts#webhooks)
-- **Monitor**: Explore the [Dashboard](./dashboard)
-- **Scale**: Read about [horizontal scaling](./architecture#scalability)
+<Cards>
+  <Card title="🔌 Configure Plugins" href="./plugins">
+    Add more notification channels
+  </Card>
+  <Card title="📦 Explore API" href="./api-reference#batch-endpoint">
+    Try batch notifications
+  </Card>
+  <Card title="🔔 Set up Webhooks" href="./core-concepts#webhooks">
+    Get real-time status updates
+  </Card>
+  <Card title="📊 Monitor" href="./admin-dashboard">
+    Explore the Dashboard
+  </Card>
+  <Card title="📈 Scale" href="./architecture#scalability-model">
+    Read about horizontal scaling
+  </Card>
+</Cards>
 
 ---
 

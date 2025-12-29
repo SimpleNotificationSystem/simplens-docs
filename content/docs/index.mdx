@@ -5,6 +5,8 @@ description: SimpleNS is a self-hosted notification orchestration engine that ma
 
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 ## What is SimpleNS?
 
@@ -24,35 +26,38 @@ SimpleNS handles the complex orchestration logic (retries, rate limiting, crash 
 
 ## Key Features
 
-### 🔌 Plugin-Based Delivery
-Delegate sending to any provider plugin. Install community plugins or build your own using the SimpleNS SDK.
-
-### 🔄 Exponential Backoff Retries
-Automatic retry with increasing delays for failed deliveries. Configurable retry limits and backoff strategies.
-
-### 🛡️ Crash Recovery
-Recovery service detects orphaned and stuck notifications, creates alerts, and enables manual intervention through the dashboard.
-
-### ⏰ Scheduled Delivery
-Queue notifications for future delivery using Redis-backed delay queues. Perfect for reminders, campaigns, and time-sensitive messages.
-
-### 📈 Horizontal Scaling
-Scale processors independently per channel. Add more workers as your volume grows without downtime.
-
-### 📡 Multi-Channel Support
-Send notifications across multiple channels (Email, WhatsApp, SMS, Push) in a single API request with channel-specific content.
-
-### 🚦 Rate Limiting
-Per-provider token bucket algorithm prevents hitting provider rate limits while maximizing throughput.
-
-### 🔔 Webhook Callbacks
-Real-time delivery status updates sent to your application via webhooks. Track every notification's journey.
-
-### 📊 Admin Dashboard
-Modern Next.js dashboard for monitoring, searching, retrying failed notifications, and managing alerts.
-
-### 📋 Observability
-Centralized logging with Grafana + Loki integration. Query and visualize logs across all services.
+<Cards>
+  <Card title="🔌 Plugin-Based Delivery">
+    Delegate sending to any provider plugin. Install community plugins or build your own using the SimpleNS SDK.
+  </Card>
+  <Card title="🔄 Exponential Backoff Retries">
+    Automatic retry with increasing delays for failed deliveries. Configurable retry limits and backoff strategies.
+  </Card>
+  <Card title="🛡️ Crash Recovery">
+    Recovery service detects orphaned and stuck notifications, creates alerts, and enables manual intervention.
+  </Card>
+  <Card title="⏰ Scheduled Delivery">
+    Queue notifications for future delivery using Redis-backed delay queues. Perfect for reminders and campaigns.
+  </Card>
+  <Card title="📈 Horizontal Scaling">
+    Scale processors independently per channel. Add more workers as your volume grows without downtime.
+  </Card>
+  <Card title="📡 Multi-Channel Support">
+    Send notifications across multiple channels (Email, WhatsApp, SMS, Push) in a single API request.
+  </Card>
+  <Card title="🚦 Rate Limiting">
+    Per-provider token bucket algorithm prevents hitting provider rate limits while maximizing throughput.
+  </Card>
+  <Card title="🔔 Webhook Callbacks">
+    Real-time delivery status updates sent to your application via webhooks. Track every notification's journey.
+  </Card>
+  <Card title="📊 Admin Dashboard">
+    Modern Next.js dashboard for monitoring, searching, retrying failed notifications, and managing alerts.
+  </Card>
+  <Card title="📋 Observability">
+    Centralized logging with Grafana + Loki integration. Query and visualize logs across all services.
+  </Card>
+</Cards>
 
 ---
 
@@ -75,33 +80,24 @@ Centralized logging with Grafana + Loki integration. Query and visualize logs ac
 
 ## Use Cases
 
-### 📦 Transactional Notifications
-- Order confirmations and receipts
-- Password reset emails
-- Account verification messages
-- Payment notifications
+<Accordions>
+  <Accordion id="transactional" title="📦 Transactional Notifications">
+    Order confirmations and receipts, password reset emails, account verification messages, and payment notifications.
+  </Accordion>
+  <Accordion id="engagement" title="🎯 User Engagement">
+    Marketing campaigns, product announcements, reminders and follow-ups, and re-engagement campaigns.
+  </Accordion>
+  <Accordion id="alerts" title="🚨 System Alerts">
+    Server monitoring alerts, error notifications, performance degradation warnings, and security alerts.
+  </Accordion>
+  <Accordion id="multichannel" title="🔀 Multi-Channel Communication">
+    Send the same message via email and SMS, fallback to alternate channels if primary fails, and channel-specific content formatting.
+  </Accordion>
+  <Accordion id="highvolume" title="📊 High-Volume Delivery">
+    Bulk notifications to thousands of users, batch processing with rate limiting, and horizontal scaling for peak loads.
+  </Accordion>
+</Accordions>
 
-### 🎯 User Engagement
-- Marketing campaigns
-- Product announcements
-- Reminders and follow-ups
-- Re-engagement campaigns
-
-### 🚨 System Alerts
-- Server monitoring alerts
-- Error notifications
-- Performance degradation warnings
-- Security alerts
-
-### 🔀 Multi-Channel Communication
-- Send the same message via email and SMS
-- Fallback to alternate channels if primary fails
-- Channel-specific content formatting
-
-### 📊 High-Volume Delivery
-- Bulk notifications to thousands of users
-- Batch processing with rate limiting
-- Horizontal scaling for peak loads
 
 ---
 

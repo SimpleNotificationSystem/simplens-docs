@@ -6,6 +6,8 @@ description: Understanding SimpleNS's system architecture, components, and desig
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 ## High-Level Architecture
 
@@ -15,24 +17,21 @@ SimpleNS follows an event-driven, microservices-inspired architecture where each
 
 ### Core Principles
 
-**1. Separation of Concerns**
-- **Orchestration** (SimpleNS Core): Handles retries, rate limiting, scheduling, recovery
-- **Delivery** (Plugins): Handles actual notification sending via provider APIs
+<Cards>
+  <Card title="🎯 Separation of Concerns">
+    **Orchestration** (SimpleNS Core) handles retries, rate limiting, scheduling, recovery. **Delivery** (Plugins) handles actual notification sending via provider APIs.
+  </Card>
+  <Card title="🔌 Plugin-Based Extensibility">
+    Swap providers without changing application code. Community-driven ecosystem with easy custom integrations.
+  </Card>
+  <Card title="📈 Horizontal Scalability">
+    Scale each component independently with partition-based parallelism and load distribution across workers.
+  </Card>
+  <Card title="🛡️ Fault Tolerance">
+    Outbox pattern prevents message loss. Crash recovery for stuck notifications. Automatic retries with exponential backoff.
+  </Card>
+</Cards>
 
-**2. Plugin-Based Extensibility**
-- Swap providers without changing application code
-- Community-driven ecosystem
-- Easy to build custom integrations
-
-**3. Horizontal Scalability**
-- Scale each component independently
-- Partition-based parallelism
-- Load distribution across workers
-
-**4. Fault Tolerance**
-- Outbox pattern prevents message loss
-- Crash recovery for stuck notifications
-- Automatic retries with exponential backoff
 
 ## System Components
 
@@ -362,7 +361,23 @@ Admin can manually retry or resolve
 
 ## Infrastructure Components
 
+<Cards>
+  <Card title="🍃 MongoDB">
+    Persistent storage for notifications, outbox, and alerts. Replica set required.
+  </Card>
+  <Card title="📨 Kafka">
+    Event streaming and message queue with channel-specific topics.
+  </Card>
+  <Card title="🔴 Redis">
+    Caching, delay queue, rate limiting, and processing locks.
+  </Card>
+  <Card title="📊 Loki + Grafana">
+    Centralized logging and visualization across all services.
+  </Card>
+</Cards>
+
 ### MongoDB
+
 
 **Purpose:** Persistent storage for notifications, outbox, alerts
 
