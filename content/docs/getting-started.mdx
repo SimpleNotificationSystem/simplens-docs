@@ -1,0 +1,297 @@
+---
+title: Getting Started
+description: Get SimpleNS up and running in 5 minutes. This guide will walk you through setting up a local instance and sending your first notification.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Docker** and **Docker Compose** (for running infrastructure services)
+- **Node.js** 18+ (for local development)
+- **OpenSSL** (for generating API keys and secrets)
+- Basic understanding of REST APIs
+
+---
+
+## Quick Start
+
+<Steps>
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/SimpleNotificationSystem/simplens-core.git
+cd simplens-core
+```
+
+### Configure Environment
+
+Copy the example environment file and generate secrets:
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Generate API key
+openssl rand -base64 32  # Copy this to NS_API_KEY in .env
+
+# Generate auth secret
+openssl rand -base64 32  # Copy this to AUTH_SECRET in .env
+```
+
+Edit `.env` and set at minimum:
+
+```bash
+NS_API_KEY=<generated-api-key>
+AUTH_SECRET=<generated-auth-secret>
+ADMIN_PASSWORD=<strong-password>
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Install a Plugin
+
+Install the Gmail plugin for email notifications:
+
+```bash
+npm run plugin:install @simplens/nodemailer-gmail
+```
+
+<Callout type="info">
+This automatically creates `simplens.config.yaml` with the plugin configuration.
+</Callout>
+
+**Configure Gmail credentials** in `.env`:
+
+```bash
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+```
+
+<Callout type="tip" title="Getting Gmail App Password">
+1. Enable 2FA on your Google Account
+2. Go to Google Account → Security → 2-Step Verification
+3. Scroll to "App passwords"
+4. Generate new app password and copy it to `EMAIL_PASS`
+</Callout>
+
+### Start Infrastructure Services
+
+```bash
+docker-compose build
+docker-compose up -d
+```
+
+This starts:
+- MongoDB (database)
+- Kafka (message queue)
+- Redis (caching & delay queue)
+- Loki (log aggregation)
+- Grafana (log visualization)
+- API Server
+- Background Worker
+- Notification Processor
+- Delayed Processor
+- Recovery Service
+- Admin Dashboard
+
+**Wait for services to be healthy** (about 30-60 seconds):
+
+```bash
+docker-compose ps
+```
+
+### Verify Installation
+
+Check that the API server is running:
+
+```bash
+curl http://localhost:3000/health
+```
+
+Expected response:
+```json
+{
+  "status": "ok",
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### Send Your First Notification
+
+<Tabs items={['Dashboard', 'cURL']}>
+  <Tab value="Dashboard">
+    Using the dashboard (recommended for first-time users):
+
+    1. Open [http://localhost:3002](http://localhost:3002)
+    2. Login with:
+       - Username: `admin`
+       - Password: `<your-password-from-env>`
+    3. Navigate to **Send**
+    4. Select channel: `email`
+    5. Fill in the required (*) fields
+    6. Click "Send Notification"
+  </Tab>
+  
+  <Tab value="cURL">
+    ```bash
+    curl -X POST http://localhost:3000/api/notification \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer <YOUR-NS-API-KEY>" \
+      -d '{
+        "request_id": "550e8400-e29b-41d4-a716-446655440000",
+        "client_id": "55283667-1f58-467d-86a1-47f7f0e059f2",
+        "channel": ["email"],
+        "recipient": {
+          "user_id": "user123",
+          "email": "test@example.com"
+        },
+        "content": {
+          "email": {
+            "subject": "Hello from SimpleNS!",
+            "message": "<h1>Welcome!</h1><p>Your notification system is working.</p>"
+          }
+        }
+      }'
+    ```
+
+    Expected response (202 Accepted):
+    ```json
+    {
+       "message": "Notifications are being processed"
+    }
+    ```
+
+    <Callout >
+    As each provider's recipient and content schemas can vary, you can get the schema from Payload Studio section in the admin dashboard. See the [Admin Dasboard Guide](./admin-dashboard)
+    </Callout>
+  </Tab>
+</Tabs>
+
+### Check Notification Status
+
+View your notification in the dashboard:
+
+1. Go to **Events** page
+2. Search for your notification by ID or email
+3. Check status: `pending` → `processing` → `delivered`
+
+</Steps>
+
+---
+
+## Next Steps
+
+<Callout type="note" title="Congratulations! 🎉">
+You've successfully sent your first notification through SimpleNS.
+</Callout>
+
+### Explore Further
+
+- **[Dashboard Features](./admin-dashboard)**: Learn about monitoring, retries, and alerts
+- **[API Reference](./api-reference)**: Explore all API endpoints and options
+- **[Scheduled Notifications](./core-concepts#scheduled-delivery)**: Queue notifications for future delivery
+- **[Webhooks](./core-concepts#webhooks)**: Get real-time status updates
+- **[Multi-Channel](./api-reference#multi-channel-requests)**: Send via email and SMS simultaneously
+
+### Install More Plugins
+
+```bash
+# For testing (mock provider)
+npm run plugin:install @simplens/mock
+
+# List installed plugins
+npm run plugin:list
+```
+
+### Build Your Own Plugin
+
+Use the CLI tool to scaffold a new plugin:
+
+```bash
+npx @simplens/create-simplens-plugin
+```
+
+See [Plugin Development Guide](./plugins) for details.
+
+---
+
+## Troubleshooting
+
+### Services won't start
+
+**Check logs:**
+```bash
+docker-compose logs <service-name>
+```
+
+<Callout type="warn" title="Common issues">
+- Ports already in use (3000, 3002, 27017, 9092, 6379)
+- MongoDB replica set initialization - wait 60s and check again
+- Missing `.env` file
+</Callout>
+
+### Notification stuck in pending
+
+**Possible causes:**
+- Worker not running: `docker-compose ps worker`
+- Processor not running: `docker-compose ps notification-processor`
+- Kafka connection issues: Check Kafka UI at http://localhost:8080
+
+### Plugin not loading
+
+**Check:**
+1. Plugin installed: `npm run plugin:list`
+2. Credentials in `.env` match `simplens.config.yaml`
+3. Restart processor: `docker-compose restart notification-processor`
+
+<Callout type="info">
+For more issues, see [Troubleshooting Guide](./troubleshooting).
+</Callout>
+
+---
+
+## Accessing Services
+
+Once running, you can access:
+
+<div className="overflow-x-auto">
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| API Server | http://localhost:3000 | Notification API |
+| Admin Dashboard | http://localhost:3002 | Monitoring & management |
+| Grafana | http://localhost:3001 | Log visualization |
+| Kafka UI | http://localhost:8080 | Kafka topic monitoring |
+
+</div>
+
+---
+
+## Development Mode
+
+For local development without Docker:
+
+```bash
+# Start infrastructure only
+docker-compose up -d mongo kafka redis loki
+
+# Run services locally
+npm run dev              # API server
+npm run worker:dev       # Background worker
+npm run processor:dev    # Notification processor
+npm run delayed-processor:dev   # Delayed processor
+npm run recovery:dev     # Recovery service
+
+# Dashboard (in separate terminal)
+cd dashboard && npm run dev
+```

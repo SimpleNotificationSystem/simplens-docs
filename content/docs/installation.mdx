@@ -1,0 +1,643 @@
+---
+title: Installation
+description: Detailed installation instructions for different environments and deployment scenarios.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+## System Requirements
+
+### Minimum Requirements
+
+- **CPU**: 2 cores
+- **RAM**: 4GB
+- **Disk**: 10GB available space
+- **OS**: Linux, macOS, or Windows (with WSL2)
+- **Docker**: 20.10+
+- **Docker Compose**: 2.0+
+
+### Recommended for Production
+
+- **CPU**: 4+ cores
+- **RAM**: 8GB+
+- **Disk**: 20GB+ SSD
+- **OS**: Linux (Ubuntu 20.04+, CentOS 8+, Debian 11+)
+- **Network**: Stable connection for plugin downloads
+
+---
+
+## Installation Methods
+
+### Docker Compose (Recommended)
+
+Docker Compose setup includes all infrastructure services and application components.
+
+<Steps>
+
+### Install Prerequisites
+
+<Tabs items={['Linux', 'macOS', 'Windows']}>
+  <Tab value="Linux">
+    **Docker and Docker Compose:**
+
+    ```bash
+    # Ubuntu/Debian
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sudo sh get-docker.sh
+    sudo usermod -aG docker $USER
+
+    # Install Docker Compose
+    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+
+    # Verify installation
+    docker --version
+    docker-compose --version
+    ```
+
+    **Node.js** (for plugin management):
+
+    ```bash
+    # Using nvm (recommended)
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+    nvm install 18
+    nvm use 18
+
+    # Verify
+    node --version  # Should be 18.x or higher
+    ```
+  </Tab>
+  
+  <Tab value="macOS">
+    **Docker Desktop:**
+
+    Download and install [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop)
+
+    **Node.js:**
+
+    ```bash
+    # Using Homebrew
+    brew install node@18
+
+    # Or using nvm
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+    nvm install 18
+    nvm use 18
+    ```
+  </Tab>
+  
+  <Tab value="Windows">
+    <Callout type="warn" title="WSL2 Required">
+    Windows requires WSL2 (Windows Subsystem for Linux) for best compatibility.
+    </Callout>
+
+    **Install WSL2:**
+
+    ```powershell
+    wsl --install
+    ```
+
+    **Docker Desktop:**
+
+    Download and install [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop) with WSL2 backend.
+
+    **Node.js:**
+
+    Install Node.js inside WSL2:
+
+    ```bash
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+    nvm install 18
+    nvm use 18
+    ```
+  </Tab>
+</Tabs>
+
+### Clone Repository
+
+```bash
+git clone https://github.com/SimpleNotificationSystem/simplens-core.git
+cd simplens-core
+```
+
+### Configure Environment
+
+```bash
+# Create environment file
+cp .env.example .env
+```
+
+**Generate secure keys:**
+
+```bash
+# API Key for authentication
+openssl rand -base64 32
+
+# Auth Secret for dashboard sessions
+openssl rand -base64 32
+```
+
+**Edit `.env` and set required variables:**
+
+```bash
+# Required
+NS_API_KEY=<your-generated-api-key>
+AUTH_SECRET=<your-generated-auth-secret>
+ADMIN_PASSWORD=<strong-password>
+
+# Optional (defaults are fine for local dev)
+PORT=3000
+DASHBOARD_PORT=3002
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Install a Plugin
+
+Install at least one notification provider plugin:
+
+<Tabs items={['Gmail', 'Mock', 'Multiple']}>
+  <Tab value="Gmail">
+    ```bash
+    npm run plugin:install @simplens/nodemailer-gmail
+    ```
+
+    This creates `simplens.config.yaml` automatically.
+
+    **Configure credentials in `.env`:**
+
+    ```bash
+    EMAIL_USER=your-email@gmail.com
+    EMAIL_PASS=your-gmail-app-password
+
+    #Add channel partiton config for kafka topics
+    EMAIL_PARTITION=1 #Add if no config exists for the channel
+    ```
+  </Tab>
+  
+  <Tab value="Mock">
+    ```bash
+    npm run plugin:install @simplens/mock
+    ```
+
+    Perfect for testing without real providers:
+
+    ```bash
+    MOCK_PARTITION=1  # Added automatically
+    ```
+  </Tab>
+  
+  <Tab value="Multiple">
+    ```bash
+    # Install multiple plugins
+    npm run plugin:install @simplens/nodemailer-gmail
+    npm run plugin:install @simplens/mock
+    
+    # Configure credentials for each in .env
+    # Add channel partiton config for kafka topics
+    <CHANNEL>_PARTITION=<NUMBER>
+    ```
+  </Tab>
+</Tabs>
+
+### Build and Start Services
+
+```bash
+# Build Docker images
+docker-compose build
+
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+```
+
+<Callout type="info" title="Services Started">
+This starts: MongoDB, Kafka, Redis, Loki, Grafana, API Server, Background Worker, Notification Processor, Delayed Processor, Recovery Service, and Admin Dashboard.
+</Callout>
+
+### Wait for Services to be Healthy
+
+```bash
+# Check service status
+docker-compose ps
+
+# All services should show "Up" and healthy
+```
+
+<Callout type="warn">
+MongoDB replica set initialization takes ~30-60 seconds. Wait for the `mongo` service to be healthy before expecting other services to function.
+</Callout>
+
+### Verify Installation
+
+Check that the API server is running:
+
+```bash
+curl http://localhost:3000/health
+```
+
+Expected response:
+```json
+{
+  "status": "ok",
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+</Steps>
+
+---
+
+### Local Development Setup
+
+For development without Docker (requires manual infrastructure setup).
+
+<Callout type="warn" title="Advanced">
+This method is for advanced users who want to run services locally without Docker.
+</Callout>
+
+<Steps>
+
+### Install Infrastructure
+
+**MongoDB** (with replica set):
+
+```bash
+# Install MongoDB
+# Ubuntu/Debian
+wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+sudo apt-get update
+sudo apt-get install -y mongodb-org
+
+# Start with replica set
+mongod --replSet rs0 --bind_ip_all --port 27017
+
+# Initialize replica set (in mongo shell)
+mongosh --eval "rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]})"
+```
+
+**Kafka**:
+
+```bash
+# Download and extract Kafka
+wget https://downloads.apache.org/kafka/3.6.0/kafka_2.13-3.6.0.tgz
+tar -xzf kafka_2.13-3.6.0.tgz
+cd kafka_2.13-3.6.0
+
+# Start Kafka (includes ZooKeeper)
+bin/kafka-server-start.sh config/kraft/server.properties
+```
+
+**Redis**:
+
+```bash
+# Install Redis
+sudo apt-get install redis-server
+
+# Start Redis
+redis-server
+```
+
+**Loki** (optional, for logging):
+
+```bash
+# Download Loki
+wget https://github.com/grafana/loki/releases/download/v2.9.0/loki-linux-amd64.zip
+unzip loki-linux-amd64.zip
+chmod +x loki-linux-amd64
+
+# Download config
+wget https://raw.githubusercontent.com/grafana/loki/main/cmd/loki/loki-local-config.yaml
+
+# Start Loki
+./loki-linux-amd64 -config.file=loki-local-config.yaml
+```
+
+### Configure for Local Development
+
+Edit `.env`:
+
+```bash
+# Database
+MONGO_URI=mongodb://localhost:27017/notification_service?replicaSet=rs0
+
+# Kafka
+BROKERS=localhost:9092
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# Loki (if running)
+LOKI_URL=http://localhost:3100
+
+# Other configs...
+NS_API_KEY=<your-key>
+# ... rest of config
+```
+
+### Run Services
+
+```bash
+# Install dependencies
+npm install
+
+# Build TypeScript
+npm run build
+
+# Start services in separate terminals
+
+# Terminal 1 - API Server
+npm run dev
+
+# Terminal 2 - Background Worker
+npm run worker:dev
+
+# Terminal 3 - Notification Processor
+npm run processor:dev
+
+# Terminal 4 - Delayed Processor
+npm run delayed-processor:dev
+
+# Terminal 5 - Recovery Service
+npm run recovery:dev
+
+# Terminal 6 - Dashboard
+cd dashboard
+npm install
+npm run dev
+```
+
+</Steps>
+
+---
+
+## Configuration Files
+
+### Environment Variables (`.env`)
+
+The `.env` file contains all configuration. See [Configuration Reference](./configuration) for complete list.
+
+**Categories:**
+- API Server settings
+- Database connections
+- Kafka configuration
+- Redis configuration
+- Plugin system
+- Worker settings
+- Retry configuration
+- Recovery settings
+- Dashboard authentication
+- Logging
+
+### Plugin Configuration (`simplens.config.yaml`)
+
+Automatically created when you install plugins. Structure:
+
+```yaml
+providers:
+  - package: "@simplens/nodemailer-gmail"
+    id: "gmail"
+    credentials:
+      EMAIL_HOST: "${EMAIL_HOST}"
+      EMAIL_PORT: "${EMAIL_PORT}"
+      EMAIL_USER: "${EMAIL_USER}"
+      EMAIL_PASS: "${EMAIL_PASS}"
+      EMAIL_FROM: "${EMAIL_FROM}"
+    options:
+      priority: 1
+      rateLimit:
+        maxTokens: 100
+        refillRate: 10
+
+channels:
+  email:
+    default: "gmail"
+```
+
+**Manual editing:**
+- Edit provider options (priority, rate limits)
+- Add fallback providers
+- Configure multiple providers per channel
+
+<Callout type="info">
+See [Configuration Guide](./configuration#plugin-configuration) for details.
+</Callout>
+
+---
+
+## Plugin Installation
+
+### Installing Plugins
+
+```bash
+npm run plugin:install <package-name>
+```
+
+**Examples:**
+
+```bash
+# Official plugins
+npm run plugin:install @simplens/nodemailer-gmail
+npm run plugin:install @simplens/mock
+
+# Third-party plugins
+npm run plugin:install @company/custom-sms-provider
+```
+
+### Managing Plugins
+
+```bash
+# List installed plugins
+npm run plugin:list
+
+# Uninstall a plugin
+npm run plugin:uninstall @simplens/nodemailer-gmail
+```
+
+### Plugin Directory Structure
+
+Plugins are installed in `.plugins/node_modules/`:
+
+```
+.plugins/
+├── package.json       # Plugin dependencies
+└── node_modules/
+    ├── @simplens/
+    │   ├── nodemailer-gmail/
+    │   └── mock/
+    └── ... (dependencies)
+```
+
+<Callout type="warn" title="Important">
+Don't modify `.plugins/` manually. Always use the plugin management scripts.
+</Callout>
+
+---
+
+## Verification
+
+### Health Checks
+
+**API Server:**
+```bash
+curl http://localhost:3000/health
+```
+
+Expected: `{"status":"ok","timestamp":"..."}`
+
+**Dashboard:**
+Open [http://localhost:3002](http://localhost:3002) and login.
+
+### Service Status
+
+```bash
+# Docker Compose
+docker-compose ps
+
+# All services should show "Up (healthy)"
+```
+
+### Send Test Notification
+
+Use the dashboard Payload Studio for getting the request schema:
+
+```bash
+curl -X POST http://localhost:3000/api/notification \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <YOUR-NS-API-KEY>" \
+  -d '{
+    "request_id": "c0d486ba-3ea4-4cf3-9b01-0d7cafa4c52b",
+    "client_id": "865ec2f2-0fbd-4634-93b5-01488774966e",
+    "channel": ["email"],
+    "recipient": {"user_id": "u1", "email": "test@example.com"},
+    "content": {"email": {"subject": "Test", "message": "Hello"}}
+  }'
+```
+
+### Check Logs
+
+```bash
+# All services
+docker-compose logs
+
+# Specific service
+docker-compose logs api
+docker-compose logs notification-processor
+
+# Follow logs
+docker-compose logs -f
+```
+
+**Grafana Logs:**
+1. Open http://localhost:3001
+2. Navigate to Explore
+3. Select Loki datasource
+4. Query: `{service="api"}`
+
+---
+
+## Post-Installation
+
+### Production Considerations
+
+<Callout type="warn" title="Before Deploying to Production">
+Make sure to complete all security and operational checks before going live.
+</Callout>
+
+Before deploying to production:
+
+1. ✅ Change default admin password
+2. ✅ Use strong API keys
+3. ✅ Configure firewall rules
+4. ✅ Set up SSL/TLS for API and dashboard
+5. ✅ Configure backups for MongoDB
+6. ✅ Set up monitoring and alerts
+7. ✅ Review security settings
+
+<Callout type="info">
+See [Deployment Guide](./deployment) for production setup.
+</Callout>
+
+### Next Steps
+
+- **Configure Plugins**: Add more notification channels
+- **Explore API**: Try [batch notifications](./api-reference#batch-endpoint)
+- **Set up Webhooks**: Get [real-time status updates](./core-concepts#webhooks)
+- **Monitor**: Explore the [Dashboard](./dashboard)
+- **Scale**: Read about [horizontal scaling](./architecture#scalability)
+
+---
+
+## Uninstallation
+
+### Stop Services
+
+```bash
+docker-compose down
+
+# Remove volumes (deletes data)
+docker-compose down -v
+```
+
+<Callout type="warn" title="Data Loss Warning">
+Using `-v` flag will delete all data including MongoDB databases. Make sure to backup first.
+</Callout>
+
+### Remove Files
+
+```bash
+# Remove cloned repository
+cd ..
+rm -rf simplens-core
+```
+
+---
+
+## Troubleshooting
+
+<Callout type="info">
+For installation issues, see [Troubleshooting Guide](./troubleshooting#installation-issues).
+</Callout>
+
+**Common issues:**
+- MongoDB replica set initialization delays
+- Port conflicts
+- Permission issues with Docker
+- Plugin installation failures
+
+### Quick Fixes
+
+**Services not starting:**
+```bash
+# Check Docker logs
+docker-compose logs
+
+# Restart a specific service
+docker-compose restart <service-name>
+```
+
+**Port conflicts:**
+```bash
+# Check which process is using the port
+sudo lsof -i :3000  # Replace 3000 with your port
+
+# Kill the process or change port in .env
+```
+
+**Permission denied:**
+```bash
+# Add user to docker group
+sudo usermod -aG docker $USER
+
+# Log out and back in, or run:
+newgrp docker
+```

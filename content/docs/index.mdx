@@ -1,0 +1,147 @@
+---
+title: Introduction
+description: SimpleNS is a self-hosted notification orchestration engine that manages delivery workflows while delegating actual sending to plugins.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+## What is SimpleNS?
+
+SimpleNS solves the notification infrastructure problem by providing a robust, scalable, and extensible foundation for multi-channel notification delivery. Unlike cloud-based notification services that lock you into proprietary APIs and pricing models, SimpleNS runs entirely in your infrastructure, giving you complete control.
+
+### Core Philosophy
+
+<Callout type="info" title="Orchestration, not delivery">
+SimpleNS handles the complex orchestration logic (retries, rate limiting, crash recovery) while plugins handle the simple delivery logic.
+</Callout>
+
+- **Plugin-based architecture**: Swap notification providers without changing application code
+- **Self-hosted**: Run on your infrastructure, maintain data sovereignty
+- **Production-ready**: Built-in observability, horizontal scaling, and fault tolerance
+
+---
+
+## Key Features
+
+### 🔌 Plugin-Based Delivery
+Delegate sending to any provider plugin. Install community plugins or build your own using the SimpleNS SDK.
+
+### 🔄 Exponential Backoff Retries
+Automatic retry with increasing delays for failed deliveries. Configurable retry limits and backoff strategies.
+
+### 🛡️ Crash Recovery
+Recovery service detects orphaned and stuck notifications, creates alerts, and enables manual intervention through the dashboard.
+
+### ⏰ Scheduled Delivery
+Queue notifications for future delivery using Redis-backed delay queues. Perfect for reminders, campaigns, and time-sensitive messages.
+
+### 📈 Horizontal Scaling
+Scale processors independently per channel. Add more workers as your volume grows without downtime.
+
+### 📡 Multi-Channel Support
+Send notifications across multiple channels (Email, WhatsApp, SMS, Push) in a single API request with channel-specific content.
+
+### 🚦 Rate Limiting
+Per-provider token bucket algorithm prevents hitting provider rate limits while maximizing throughput.
+
+### 🔔 Webhook Callbacks
+Real-time delivery status updates sent to your application via webhooks. Track every notification's journey.
+
+### 📊 Admin Dashboard
+Modern Next.js dashboard for monitoring, searching, retrying failed notifications, and managing alerts.
+
+### 📋 Observability
+Centralized logging with Grafana + Loki integration. Query and visualize logs across all services.
+
+---
+
+## Why SimpleNS?
+
+<div className="overflow-x-auto">
+
+| Problem | SimpleNS Solution |
+|---------|------------------|
+| Locked into a single notification provider | Plugin architecture — swap providers without code changes |
+| Notifications fail silently | Exponential backoff retries with configurable limits |
+| Crashes leave messages stuck | Crash recovery service detects & rescues orphaned notifications |
+| Single point of failure | Horizontally scalable workers and processors |
+| Complex scheduling logic | Built-in scheduled delivery with Redis-backed queues |
+| Different APIs for each channel | Unified API for all notification channels |
+
+</div>
+
+---
+
+## Use Cases
+
+### 📦 Transactional Notifications
+- Order confirmations and receipts
+- Password reset emails
+- Account verification messages
+- Payment notifications
+
+### 🎯 User Engagement
+- Marketing campaigns
+- Product announcements
+- Reminders and follow-ups
+- Re-engagement campaigns
+
+### 🚨 System Alerts
+- Server monitoring alerts
+- Error notifications
+- Performance degradation warnings
+- Security alerts
+
+### 🔀 Multi-Channel Communication
+- Send the same message via email and SMS
+- Fallback to alternate channels if primary fails
+- Channel-specific content formatting
+
+### 📊 High-Volume Delivery
+- Bulk notifications to thousands of users
+- Batch processing with rate limiting
+- Horizontal scaling for peak loads
+
+---
+
+## Architecture Overview
+
+SimpleNS is built on a modern, event-driven architecture:
+
+<Callout type="tip" title="Core Services">
+- **API Server**: REST API for notification ingestion
+- **Background Worker**: Outbox pattern for reliable message publishing
+- **Unified Processor**: Plugin-based delivery with rate limiting and retries
+- **Delayed Processor**: Scheduled notification handling
+- **Recovery Service**: Detects and recovers stuck notifications
+- **Admin Dashboard**: Web-based monitoring and management
+</Callout>
+
+**Infrastructure:**
+- MongoDB for persistent storage
+- Kafka for event streaming
+- Redis for caching and delay queues
+- Loki + Grafana for logging and visualization
+
+<Callout type="note">
+For detailed architecture information, see [Architecture](./docs/architecture).
+</Callout>
+
+---
+
+## Getting Started
+
+Ready to get started? Check out our [Getting Started Guide](./docs/getting-started) to have SimpleNS running in 5 minutes.
+
+<Callout type="warn" title="Prerequisites">
+Make sure you have Docker and Docker Compose installed on your system before proceeding.
+</Callout>
+
+---
+
+## Community & Support
+
+- **GitHub Repository**: [simplens-core](https://github.com/SimpleNotificationSystem/simplens-core)
+- **Issues**: Report bugs and problems on [GitHub Issues](https://github.com/SimpleNotificationSystem/simplens-core/issues)
+- **Discussions**: Share ideas and ask questions
