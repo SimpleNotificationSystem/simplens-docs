@@ -1,0 +1,96 @@
+---
+title: Troubleshooting
+description: Common solutions for installation, runtime, and performance issues.
+---
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+## Installation Issues
+
+<Accordions>
+  <Accordion title="Docker containers failing to start">
+    **Symptoms:** Services exit immediately or health checks fail.
+    
+    1. **Check Logs:** `docker-compose logs <service-name>`
+    2. **Verify .env:** Ensure no spaces around `=` and all required vars are set.
+    3. **Port Conflicts:** Check if ports `3000`, `27017`, `9092`, or `6379` are used.
+  </Accordion>
+
+  <Accordion title="MongoDB Replica Set Fails">
+    **Symptoms:** Mongo container continually restarts.
+    
+    **fix:**
+    ```bash
+    docker-compose down -v
+    docker-compose up -d mongo
+    # Wait 60s for auto-initialization script
+    ```
+  </Accordion>
+  
+  <Accordion title="Plugin Installation Errors">
+    **Symptoms:** `npm run plugin:install` fails.
+    
+    - Verify `.plugins/` directory permissions.
+    - Try clearing cache: `npm cache clean --force`.
+    - Manually install: `cd .plugins && npm install <package>`.
+  </Accordion>
+</Accordions>
+
+## Runtime Issues
+
+<Accordions>
+  <Accordion title="Notifications Stuck in Pending">
+    **Status remains 'pending' forever.**
+    
+    1. **Worker Check:** Is the `worker` service running?
+    2. **Kafka Connection:** Is Kafka reachable? `docker-compose restart kafka`.
+    3. **Outbox Polling:** Check worker logs for "outbox" activity.
+  </Accordion>
+
+  <Accordion title="Retries Exhausted">
+    **Status is 'failed' with max retries.**
+    
+    - **Invalid Credentials:** Check provider keys in `.env`.
+    - **Rate Limit:** Provider might be blocking IP.
+    - **Action:** Fix credential, then use **Dashboard > Failed Events > Retry**.
+  </Accordion>
+
+  <Accordion title="Scheduled Notifications Not Sending">
+    **Time passed but still pending.**
+    
+    1. **Timezone:** Ensure `scheduled_at` is UTC ISO format (e.g., `2024-12-31T23:59:59Z`).
+    2. **Delayed Processor:** Ensure `delayed-processor` container is running.
+  </Accordion>
+</Accordions>
+
+## Dashboard Issues
+
+<Accordions>
+  <Accordion title="Cannot Login">
+    - Verify `ADMIN_PASSWORD` in `.env`.
+    - Ensure `AUTH_SECRET` is set.
+    - Clear browser cookies for `localhost:3002`.
+  </Accordion>
+  
+  <Accordion title="No Data / Stats Empty">
+    - **DB Mismatch:** Ensure Dashboard `.env` `MONGO_URI` matches API server.
+    - **Check Logs:** `docker-compose logs dashboard`.
+  </Accordion>
+</Accordions>
+
+## Debugging
+
+### Enable Debug Mode
+Set `LOG_LEVEL=debug` in your `.env` file and restart services.
+
+### Grafana Logs (Loki)
+1. Open `http://localhost:3001`
+2. Explore > Loki
+3. Query: `{service="api", level="error"}`
+
+### Common Log Patterns
+| Pattern | Meaning |
+|:--- |:--- |
+| `[INFO] Notification ... delivered` | Success |
+| `[WARN] ... failed, retrying` | Transient failure, will retry |
+| `[ERROR] ... Invalid credentials` | Config error, requires manual fix |

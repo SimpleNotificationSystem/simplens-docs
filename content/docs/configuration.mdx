@@ -1,0 +1,180 @@
+---
+title: Configuration
+description: Complete reference for environment variables and configuration files.
+---
+
+## Environment Variables
+
+All services are configured via the `.env` file. Copy `.env.example` to `.env` and configure the required variables.
+
+### API Server
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `NS_API_KEY` | **Required** | Secure token for API authentication. Generate via: `openssl rand -base64 32` |
+| `PORT` | `3000` | Port for the API server. |
+| `MAX_BATCH_REQ_LIMIT` | `1000` | Maximum items allowed in a single batch request. |
+
+### Database
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `MONGO_URI` | Auto (Docker) | MongoDB connection string. Skip if using docker-compose. Must be a replica set. |
+
+### Kafka
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `BROKERS` | `localhost:9092` | Kafka brokers list. Skip if using docker-compose. |
+| `DELAYED_PARTITION` | `1` | Number of partitions for `delayed_notification` topic. |
+| `NOTIFICATION_STATUS_PARTITION` | `1` | Number of partitions for `notification_status` topic. |
+
+<Callout type="info">
+**Channel-Specific Partitions**: For each channel defined in `simplens.config.yaml`, add a `{CHANNEL}_PARTITION` variable (e.g., `EMAIL_PARTITION=5`, `SMS_PARTITION=3`). Topic name will be `{channel}_notification`.
+</Callout>
+
+### Redis
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `REDIS_URL` | `redis://localhost:6379` | Redis connection URL. Skip if using docker-compose. |
+
+### Plugin System
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `SIMPLENS_CONFIG_PATH` | `./simplens.config.yaml` | Path to plugin configuration file. |
+| `PROCESSOR_CHANNEL` | `all` | Process all channels or specify one: `email`, `sms`, etc. |
+
+### Background Worker
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `WORKER_ID` | Auto-generated | Unique worker ID. Auto-generated UUID if not set. |
+| `OUTBOX_POLL_INTERVAL_MS` | `5000` | Poll MongoDB outbox every 5 seconds. |
+| `OUTBOX_CLEANUP_INTERVAL_MS` | `60000` | Cleanup published entries every 60 seconds. |
+| `OUTBOX_BATCH_SIZE` | `100` | Process 100 outbox entries per poll. |
+| `OUTBOX_RETENTION_MS` | `300000` | Keep published entries for 5 minutes before cleanup. |
+| `OUTBOX_CLAIM_TIMEOUT_MS` | `30000` | Claim timeout for crashed workers (30 seconds). |
+
+### Retry & Idempotency
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `IDEMPOTENCY_TTL_SECONDS` | `86400` | Keep idempotency keys for 24 hours (request ID deduplication). |
+| `MAX_RETRY_COUNT` | `5` | Maximum retry attempts before marking as failed. |
+| `PROCESSING_TTL_SECONDS` | `120` | Processing lock held for 2 minutes. |
+
+### Delayed Notifications
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `DELAYED_POLL_INTERVAL_MS` | `1000` | Poll Redis delay queue every 1 second. |
+| `DELAYED_BATCH_SIZE` | `10` | Fetch 10 due events per poll. |
+| `MAX_POLLER_RETRIES` | `3` | Max retries for delayed processor before marking failed. |
+
+### Recovery Service
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `RECOVERY_POLL_INTERVAL_MS` | `60000` | Run recovery checks every 1 minute. |
+| `PROCESSING_STUCK_THRESHOLD_MS` | `300000` | Mark notification as stuck after 5 minutes in processing. |
+| `PENDING_STUCK_THRESHOLD_MS` | `300000` | Mark notification as orphaned after 5 minutes in pending. |
+| `RECOVERY_BATCH_SIZE` | `50` | Process 50 stuck notifications per poll. |
+| `RECOVERY_CLAIM_TIMEOUT_MS` | `60000` | Claim timeout for recovery worker (1 minute). |
+
+### Cleanup (part of Recovery Service)
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `CLEANUP_RESOLVED_ALERTS_RETENTION_MS` | `86400000` | Keep resolved alerts for 24 hours. |
+| `CLEANUP_PROCESSED_STATUS_OUTBOX_RETENTION_MS` | `86400000` | Keep processed status outbox entries for 24 hours. |
+
+### Logging (Grafana/Loki)
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `LOKI_URL` | `http://localhost:3100` | Loki URL for log aggregation. Skip if using docker-compose. |
+| `LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error`. |
+| `LOG_TO_FILE` | `true` | Enable file logging. |
+
+### Admin Dashboard
+
+| Variable | Default | Description |
+|:--- |:--- |:--- |
+| `AUTH_SECRET` | **Required** | Session encryption key for NextAuth. Generate via: `openssl rand -base64 32` |
+| `ADMIN_USERNAME` | `admin` | Dashboard admin username. |
+| `ADMIN_PASSWORD` | **Required** | Dashboard admin password. Use a strong password. |
+| `AUTH_TRUST_HOST` | `true` | Trust host for auth. Required if running behind proxy or locally. |
+| `API_BASE_URL` | `http://localhost:3000` | Notification service API URL. |
+| `WEBHOOK_HOST` | `localhost` | Webhook host for callbacks. |
+| `WEBHOOK_PORT` | `3002` | Dashboard webhook port. |
+| `DASHBOARD_PORT` | `3002` | Dashboard HTTP server port. |
+
+### Plugin-Specific Variables
+
+#### Channel Partitions
+Each channel in your `simplens.config.yaml` requires a partition configuration:
+
+```bash
+# Format: {CHANNEL}_PARTITION=<number>
+MOCK_PARTITION=1
+EMAIL_PARTITION=5
+SMS_PARTITION=3
+WHATSAPP_PARTITION=2
+```
+
+#### Plugin Credentials
+
+Credentials depend on the plugins you've installed. Example for `@simplens/nodemailer-gmail`:
+
+```bash
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-gmail-app-password  # NOT your regular password!
+```
+
+<Callout type="warn">
+Check each plugin's documentation for required environment variables. Plugin credentials are referenced in `simplens.config.yaml` using `${VAR_NAME}` syntax.
+</Callout>
+
+---
+
+## Plugin Configuration
+
+The `simplens.config.yaml` file defines your active providers and routing logic.
+
+```yaml title="simplens.config.yaml"
+providers:
+  - package: "@simplens/nodemailer-gmail"
+    id: "gmail"
+    credentials:
+      EMAIL_USER: "${EMAIL_USER}"  # References process.env.EMAIL_USER
+      EMAIL_PASS: "${EMAIL_PASS}"
+    options:
+      priority: 1
+      rateLimit:
+        maxTokens: 100
+        refillRate: 10
+
+channels:
+  email:
+    default: "gmail"
+    fallback: "sendgrid" # Optional fallback provider ID
+```
+
+### Scaling Configuration
+
+To increase throughput, you can scale specific components. ensure your **Kafka Partitions** match your consumer count.
+
+**1. Update Partitions:**
+```bash
+# In .env
+EMAIL_PARTITION=10
+SMS_PARTITION=5
+```
+
+**2. Scale Processors:**
+```bash
+# Docker Compose
+docker-compose up -d --scale notification-processor=10
+```

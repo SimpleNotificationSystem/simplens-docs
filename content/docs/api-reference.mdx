@@ -1,0 +1,292 @@
+---
+title: API Reference
+description: Complete REST API documentation for SimpleNS.
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Authentication
+
+All API requests require authentication using a Bearer token.
+
+**Header:**
+```http
+Authorization: Bearer <NS_API_KEY>
+```
+
+**Setup:**
+1. Generate a secure API key (e.g., `openssl rand -base64 32`).
+2. Set the `NS_API_KEY` environment variable in your SimpleNS server configuration.
+
+<Callout type="error">
+  **401 Unauthorized**: Returned if the API Key is missing or invalid.
+</Callout>
+
+---
+
+## Endpoints
+
+### Single Notification
+
+Send a notification to one or more channels for a single recipient context.
+
+`POST /api/notification`
+
+#### Request Body
+
+<TypeTable
+  type={{
+    request_id: {
+      description: 'Unique UUIDv4 for tracking this request.',
+      type: 'string (uuid)',
+      required: true
+    },
+    client_id: {
+      description: 'UUID Identifier for the client application.',
+      type: 'string (uuid)',
+      required: true
+    },
+    client_name: {
+      description: 'Human-readable name of the client.',
+      type: 'string',
+    },
+    channel: {
+      description: 'List of channels to send to (e.g., ["email", "sms"]).',
+      type: 'string[]',
+      required: true
+    },
+    provider: {
+      description: 'Specific providers for each channel. Must match channel array length if provided.',
+      type: 'string[]',
+    },
+    webhook_url: {
+      description: 'URL to receive status callbacks.',
+      type: 'string (url)',
+      required: true
+    },
+    recipient: {
+      description: 'Key-value map of recipient details (email, phone, etc.).',
+      type: 'Record<string, unknown>',
+      required: true
+    },
+    content: {
+      description: 'Key-value map of channel content.',
+      type: 'Record<string, unknown>',
+      required: true
+    },
+    variables: {
+      description: 'Variables for template substitution.',
+      type: 'Record<string, string>'
+    },
+    scheduled_at: {
+      description: 'ISO 8601 date string for future delivery.',
+      type: 'string (date)'
+    }
+  }}
+/>
+
+<Callout type="info">
+**Schema Variations**: The `recipient` and `content` field schemas vary depending on the notification provider plugin you're using. To get the exact schema for your installed providers, use the **Payload Studio** section in the Admin Dashboard. Refer the [Admin Dashboard Guide](./admin-dashboard#payload-studio)
+</Callout>
+
+
+
+#### Example
+
+```json title="Request"
+{
+  "request_id": "550e8400-e29b-41d4-a716-446655440000",
+  "client_id": "c10e8400-e29b-41d4-a716-446655440000",
+  "channel": ["email", "sms"],
+  "recipient": {
+    "email": "user@example.com",
+    "phone": "+1234567890",
+    "user_id": "u_123"
+  },
+  "content": {
+    "email": {
+      "subject": "Security Alert",
+      "body": "Your login code is {{code}}"
+    },
+    "sms": {
+      "message": "Your login code is {{code}}"
+    }
+  },
+  "variables": {
+    "code": "123456"
+  },
+  "webhook_url": "https://myapp.com/hooks/notifications"
+}
+```
+
+#### Response
+
+**202 Accepted**
+
+```json
+{
+  "message": "Notifications are being processed",
+  "notification_ids": [
+    "6590a...", 
+    "6590b..."
+  ],
+  "created_count": 2,
+  "duplicate_count": 0
+}
+```
+
+---
+
+### Batch Notification
+
+Broadcast a notification to multiple recipients efficiently.
+
+`POST /api/notification/batch`
+
+#### Request Body
+
+<TypeTable
+  type={{
+    client_id: {
+      description: 'UUID Identifier for the client application.',
+      type: 'string (uuid)',
+      required: true
+    },
+    channel: {
+      description: 'List of channels to send to.',
+      type: 'string[]',
+      required: true
+    },
+    content: {
+      description: 'Content shared across all recipients.',
+      type: 'Record<string, unknown>',
+      required: true
+    },
+    recipients: {
+      description: 'Array of recipient objects. Each object must contain `request_id`, `user_id`, and any channel-specific fields (e.g., `email`).',
+      type: 'Array',
+      required: true
+    },
+    webhook_url: {
+      description: 'URL to receive status callbacks.',
+      type: 'string (url)',
+      required: true
+    }
+  }}
+/>
+
+#### Example
+
+```json title="Request"
+{
+  "client_id": "c10e8400-e29b-41d4-a716-446655440000",
+  "channel": ["email"],
+  "content": {
+    "email": {
+      "subject": "Weekly Newsletter",
+      "message": "email message with template variables: {{name}}"
+    }
+  },
+  "recipients": [
+    {
+      "request_id": "r_1",
+      "user_id": "user_1",
+      "email": "alice@example.com",
+      "variables": { "name": "Alice" }
+    },
+    {
+      "request_id": "r_2",
+      "user_id": "user_2",
+      "email": "bob@example.com",
+      "variables": { "name": "Bob" }
+    }
+  ],
+  "webhook_url": "https://myapp.com/hooks/batch"
+}
+```
+
+#### Response
+
+**202 Accepted**
+
+```json
+{
+  "message": "Notifications are being processed",
+  "notification_ids": [
+    "6590a...", 
+    "6590b..."
+  ],
+  "created_count": 2,
+  "duplicate_count": 0
+}
+```
+
+---
+
+### Get Plugins
+
+Retrieve metadata about available channels and their configuration schemas.
+
+`GET /api/plugins`
+
+#### Response
+
+**200 OK**
+
+Returns a JSON object containing registered channels and their provider details.
+
+---
+
+### Health Check
+
+`GET /health`
+
+**200 OK**
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T12:00:00.000Z"
+}
+```
+
+---
+
+## Errors
+
+The API uses standard HTTP status codes.
+
+| Code | Meaning | Description |
+|------|---------|-------------|
+| 400 | Bad Request | Validation failure. Check `errors` array in response. |
+| 401 | Unauthorized | Invalid or missing API Key. |
+| 409 | Conflict | Duplicate `request_id` + `channel` detected. |
+| 500 | Internal Error | Server-side processing error. |
+
+#### Validation Error Example (400)
+
+```json
+{
+  "message": "Validation failed",
+  "errors": [
+    {
+      "path": "webhook_url",
+      "message": "Invalid url"
+    }
+  ]
+}
+```
+
+#### Duplicate Error Example (409)
+
+```json
+{
+  "message": "All notifications are duplicates",
+  "duplicateCount": 2,
+  "duplicates": [
+    { "request_id": "req-1", "channel": "email" }
+  ]
+}
+```

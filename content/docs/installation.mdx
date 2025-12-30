@@ -8,6 +8,7 @@ import { Steps, Step } from 'fumadocs-ui/components/steps';
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 import { File, Folder, Files } from 'fumadocs-ui/components/files';
+import { Plug, Package, Bell, BarChart, TrendingUp } from 'lucide-react';
 
 ## Installation Methods
 
@@ -388,11 +389,8 @@ providers:
   - package: "@simplens/nodemailer-gmail"
     id: "gmail"
     credentials:
-      EMAIL_HOST: "${EMAIL_HOST}"
-      EMAIL_PORT: "${EMAIL_PORT}"
       EMAIL_USER: "${EMAIL_USER}"
       EMAIL_PASS: "${EMAIL_PASS}"
-      EMAIL_FROM: "${EMAIL_FROM}"
     options:
       priority: 1
       rateLimit:
@@ -431,7 +429,7 @@ npm run plugin:install @simplens/nodemailer-gmail
 npm run plugin:install @simplens/mock
 
 # Third-party plugins
-npm run plugin:install @company/custom-sms-provider
+npm run plugin:install <npm_package_name>
 ```
 
 ### Managing Plugins
@@ -451,6 +449,7 @@ Plugins are installed in `.plugins/node_modules/`:
 <Files>
   <Folder name=".plugins" defaultOpen>
     <File name="package.json" />
+    <File name="package.lock.json"/>
     <Folder name="node_modules" defaultOpen>
       <Folder name="@simplens" defaultOpen>
         <Folder name="nodemailer-gmail" />
@@ -545,30 +544,6 @@ Before deploying to production:
 5. ✅ Configure backups for MongoDB
 6. ✅ Set up monitoring and alerts
 7. ✅ Review security settings
-
-<Callout type="info">
-See [Deployment Guide](./deployment) for production setup.
-</Callout>
-
-### Next Steps
-
-<Cards>
-  <Card title="🔌 Configure Plugins" href="./plugins">
-    Add more notification channels
-  </Card>
-  <Card title="📦 Explore API" href="./api-reference#batch-endpoint">
-    Try batch notifications
-  </Card>
-  <Card title="🔔 Set up Webhooks" href="./core-concepts#webhooks">
-    Get real-time status updates
-  </Card>
-  <Card title="📊 Monitor" href="./admin-dashboard">
-    Explore the Dashboard
-  </Card>
-  <Card title="📈 Scale" href="./architecture#scalability-model">
-    Read about horizontal scaling
-  </Card>
-</Cards>
 
 ---
 

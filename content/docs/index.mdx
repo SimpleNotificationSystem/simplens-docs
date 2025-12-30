@@ -7,6 +7,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Plug, RefreshCw, Shield, Clock, TrendingUp, Radio, TrafficCone, Bell, BarChart, ClipboardList, Target, AlertTriangle, Shuffle, Package} from 'lucide-react';
 
 ## What is SimpleNS?
 
@@ -27,34 +28,34 @@ SimpleNS handles the complex orchestration logic (retries, rate limiting, crash 
 ## Key Features
 
 <Cards>
-  <Card title="🔌 Plugin-Based Delivery">
+  <Card title={<><Plug className="inline w-5 h-5 mr-2" /> Plugin-Based Delivery</>}>
     Delegate sending to any provider plugin. Install community plugins or build your own using the SimpleNS SDK.
   </Card>
-  <Card title="🔄 Exponential Backoff Retries">
+  <Card title={<><RefreshCw className="inline w-5 h-5 mr-2" /> Exponential Backoff Retries</>}>
     Automatic retry with increasing delays for failed deliveries. Configurable retry limits and backoff strategies.
   </Card>
-  <Card title="🛡️ Crash Recovery">
+  <Card title={<><Shield className="inline w-5 h-5 mr-2" /> Crash Recovery</>}>
     Recovery service detects orphaned and stuck notifications, creates alerts, and enables manual intervention.
   </Card>
-  <Card title="⏰ Scheduled Delivery">
+  <Card title={<><Clock className="inline w-5 h-5 mr-2" /> Scheduled Delivery</>}>
     Queue notifications for future delivery using Redis-backed delay queues. Perfect for reminders and campaigns.
   </Card>
-  <Card title="📈 Horizontal Scaling">
+  <Card title={<><TrendingUp className="inline w-5 h-5 mr-2" /> Horizontal Scaling</>}>
     Scale processors independently per channel. Add more workers as your volume grows without downtime.
   </Card>
-  <Card title="📡 Multi-Channel Support">
+  <Card title={<><Radio className="inline w-5 h-5 mr-2" /> Multi-Channel Support</>}>
     Send notifications across multiple channels (Email, WhatsApp, SMS, Push) in a single API request.
   </Card>
-  <Card title="🚦 Rate Limiting">
+  <Card title={<><TrafficCone className="inline w-5 h-5 mr-2" /> Rate Limiting</>}>
     Per-provider token bucket algorithm prevents hitting provider rate limits while maximizing throughput.
   </Card>
-  <Card title="🔔 Webhook Callbacks">
+  <Card title={<><Bell className="inline w-5 h-5 mr-2" /> Webhook Callbacks</>}>
     Real-time delivery status updates sent to your application via webhooks. Track every notification's journey.
   </Card>
-  <Card title="📊 Admin Dashboard">
+  <Card title={<><BarChart className="inline w-5 h-5 mr-2" /> Admin Dashboard</>}>
     Modern Next.js dashboard for monitoring, searching, retrying failed notifications, and managing alerts.
   </Card>
-  <Card title="📋 Observability">
+  <Card title={<><ClipboardList className="inline w-5 h-5 mr-2" /> Observability</>}>
     Centralized logging with Grafana + Loki integration. Query and visualize logs across all services.
   </Card>
 </Cards>
@@ -81,19 +82,19 @@ SimpleNS handles the complex orchestration logic (retries, rate limiting, crash 
 ## Use Cases
 
 <Accordions>
-  <Accordion id="transactional" title="📦 Transactional Notifications">
+  <Accordion id="transactional" title={<><Package className="inline w-5 h-5 mr-2" /> Transactional Notifications</>}>
     Order confirmations and receipts, password reset emails, account verification messages, and payment notifications.
   </Accordion>
-  <Accordion id="engagement" title="🎯 User Engagement">
+  <Accordion id="engagement" title={<><Target className="inline w-5 h-5 mr-2" /> User Engagement</>}>
     Marketing campaigns, product announcements, reminders and follow-ups, and re-engagement campaigns.
   </Accordion>
-  <Accordion id="alerts" title="🚨 System Alerts">
+  <Accordion id="alerts" title={<><AlertTriangle className="inline w-5 h-5 mr-2" /> System Alerts</>}>
     Server monitoring alerts, error notifications, performance degradation warnings, and security alerts.
   </Accordion>
-  <Accordion id="multichannel" title="🔀 Multi-Channel Communication">
+  <Accordion id="multichannel" title={<><Shuffle className="inline w-5 h-5 mr-2" /> Multi-Channel Communication</>}>
     Send the same message via email and SMS, fallback to alternate channels if primary fails, and channel-specific content formatting.
   </Accordion>
-  <Accordion id="highvolume" title="📊 High-Volume Delivery">
+  <Accordion id="highvolume" title={<><BarChart className="inline w-5 h-5 mr-2" /> High-Volume Delivery</>}>
     Bulk notifications to thousands of users, batch processing with rate limiting, and horizontal scaling for peak loads.
   </Accordion>
 </Accordions>
@@ -140,4 +141,3 @@ Make sure you have Docker and Docker Compose installed on your system before pro
 
 - **GitHub Repository**: [simplens-core](https://github.com/SimpleNotificationSystem/simplens-core)
 - **Issues**: Report bugs and problems on [GitHub Issues](https://github.com/SimpleNotificationSystem/simplens-core/issues)
-- **Discussions**: Share ideas and ask questions

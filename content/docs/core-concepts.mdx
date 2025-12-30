@@ -1,0 +1,667 @@
+---
+title: Core Concepts
+description: Key concepts and design patterns used in SimpleNS for reliable notification delivery.
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Notification Lifecycle
+
+### States
+
+A notification progresses through the following states:
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Queued for delivery (includes scheduled notifications waiting for their delivery time) |
+| `processing` | Currently being delivered by the unified processor |
+| `delivered` | Successfully sent to the provider and recipient |
+| `failed` | All retry attempts exhausted or non-retryable error |
+
+<Callout type="info">
+Scheduled notifications don't have a separate state. They remain in `pending` status with a `scheduled_at` field. The Delayed Processor monitors these and publishes them to the appropriate channel topic when the scheduled time arrives.
+</Callout>
+
+### State Transitions
+
+```
+pending → processing → delivered
+pending → processing → failed (after all retries exhausted or non-retryable error)
+```
+
+### Viewing Notification State
+
+<Tabs items={['Dashboard', 'Grafana Logs']}>
+<Tab value="Dashboard">
+
+1. Navigate to **Events** page
+2. Search by notification ID, email, or other criteria
+3. View current status and full history
+
+</Tab>
+<Tab value="Grafana Logs">
+
+```bash
+{notification_id="<id>"}
+```
+
+</Tab>
+</Tabs>
+
+---
+
+## Transactional Outbox Pattern
+
+The transactional outbox pattern ensures reliable message publishing even during system failures.
+
+### Why Outbox?
+
+**Problem:** Writing to database and publishing to Kafka in separate operations can fail partially:
+- Database write succeeds, Kafka publish fails → notification lost
+- Kafka publish succeeds, database write fails → duplicate notification
+
+**Solution:** Transactional Outbox pattern guarantees atomicity and at-least-once delivery.
+
+### How It Works
+
+<Steps>
+<Step>
+**API writes both notification and outbox entry in a MongoDB transaction**
+
+```javascript
+session.withTransaction(async () => {
+  await notifications.insertOne(notification);
+  await outbox.insertOne({
+    notification_id,
+    status: 'pending',
+    topic: `${channel}_notification`
+  });
+});
+```
+</Step>
+
+<Step>
+**Background worker polls outbox table**
+
+Polls every 5 seconds (configurable via `OUTBOX_POLL_INTERVAL_MS`):
+
+```javascript
+const entries = await outbox.find({
+  status: 'pending',
+  $or: [
+    { claimed_by: null },
+    { claimed_at: { $lt: staleThreshold } }
+  ]
+}).limit(OUTBOX_BATCH_SIZE);
+```
+</Step>
+
+<Step>
+**Worker claims entries (prevents duplicate processing)**
+
+Uses atomic `findOneAndUpdate` with worker ID:
+
+```javascript
+await outbox.findOneAndUpdate(
+  { _id: entry._id, claimed_by: null },
+  { $set: { claimed_by: WORKER_ID, claimed_at: new Date() } }
+);
+```
+</Step>
+
+<Step>
+**Worker publishes to Kafka**
+
+Groups by topic and batch publishes:
+
+```javascript
+await kafka.send({ 
+  topic: entry.topic,  // e.g., 'email_notification'
+  messages: [{ key: notification_id, value: payload }] 
+});
+```
+</Step>
+
+<Step>
+**Worker marks as published**
+
+Updates both outbox and notification status in a transaction:
+
+```javascript
+await outbox.updateOne({ _id }, { status: 'published' });
+await notification.updateOne({ _id }, { status: 'processing' });
+```
+</Step>
+
+<Step>
+**Cleanup job removes old entries** (configurable retention, default: 5 minutes)
+</Step>
+</Steps>
+
+### Benefits
+
+- **Atomicity**: Database and message queue stay consistent
+- **Reliability**: Messages never lost even if worker crashes
+- **Idempotency**: Duplicate processing prevented via claiming with timeout
+- **Observability**: Outbox table shows publishing status
+
+---
+
+## Retry Strategy
+
+### Exponential Backoff
+
+When a notification delivery fails with a **retryable error**, SimpleNS automatically retries with increasing delays:
+
+```
+Delay (seconds) = base_delay * (2 ^ retry_count)
+
+Retry 1: ~1 second
+Retry 2: ~2 seconds
+Retry 3: ~4 seconds
+Retry 4: ~8 seconds
+Retry 5: ~16 seconds
+```
+
+### Configuration
+
+```bash
+MAX_RETRY_COUNT=5  # Maximum retry attempts (default: 5)
+```
+
+### Retry Scenarios
+
+<Tabs items={['Retryable Errors', 'Non-Retryable Errors']}>
+<Tab value="Retryable Errors">
+
+**Retries are triggered for:**
+- Network errors (ECONNREFUSED, ETIMEDOUT)
+- Provider API errors (5xx responses)
+- Temporary failures (quota exceeded)
+- Rate limit exceeded (pushed to delayed queue)
+
+</Tab>
+<Tab value="Non-Retryable Errors">
+
+**No retries for:**
+- Invalid credentials (permanent failure)
+- Validation errors (4xx responses)
+- Recipient not found
+- Schema validation failures
+
+<Callout type="info">
+Non-retryable errors trigger the **fallback provider** logic if one is configured.
+</Callout>
+
+</Tab>
+</Tabs>
+
+### Retry Flow
+
+<Steps>
+<Step>
+Unified processor attempts delivery via plugin
+</Step>
+
+<Step>
+Plugin returns `{ success: false, error: { message, retryable } }`
+</Step>
+
+<Step>
+Processor increments `retry_count` in the notification payload
+</Step>
+
+<Step>
+If `retry_count < MAX_RETRY_COUNT` and error is retryable:
+- Calculate backoff delay
+- Publish to `delayed_notification` topic
+- Delayed processor re-queues for retry
+</Step>
+
+<Step>
+Else:
+- Mark notification as `failed`
+- Update idempotency cache in Redis
+- Admin can manually retry from dashboard
+</Step>
+</Steps>
+
+### Manual Retries
+
+From the Dashboard:
+1. Go to **Failed** page
+2. Select notifications
+3. Click **Retry** (individual or bulk up to 100)
+4. Notifications re-enter the delivery pipeline
+
+---
+
+## Rate Limiting
+
+### Token Bucket Algorithm
+
+Each provider has a token bucket configured in `simplens.config.yaml`:
+
+```yaml
+options:
+  rateLimit:
+    maxTokens: 100      # Bucket capacity
+    refillRate: 10      # Tokens added per second
+```
+
+### How It Works
+
+<Steps>
+<Step>
+**Initialization**: Bucket starts full (e.g., 100 tokens)
+</Step>
+
+<Step>
+**Consumption**: Each notification consumes 1 token
+</Step>
+
+<Step>
+**Refill**: Every second, add `refillRate` tokens (max = `maxTokens`)
+</Step>
+
+<Step>
+**Wait**: If bucket empty, processor increments `retry_count` and pushes to delayed queue
+</Step>
+</Steps>
+
+### Implementation (Redis Lua Script)
+
+The rate limiter uses atomic Lua scripts for thread-safety:
+
+```lua
+-- Get current state
+local current_tokens = tonumber(redis.call('GET', tokens_key)) or max_tokens
+local last_refill = tonumber(redis.call('GET', last_refill_key)) or now
+
+-- Calculate tokens to add based on elapsed time
+local elapsed_seconds = (now - last_refill) / 1000
+local tokens_to_add = elapsed_seconds * refill_rate
+local new_tokens = math.min(current_tokens + tokens_to_add, max_tokens)
+
+-- Try to consume a token
+if new_tokens >= 1 then
+  new_tokens = new_tokens - 1
+  redis.call('SET', tokens_key, new_tokens)
+  redis.call('SET', last_refill_key, now)
+  return { 1, new_tokens }  -- allowed
+else
+  return { 0, new_tokens, wait_time }  -- denied
+end
+```
+
+### Default Configuration
+
+If no rate limit is configured in the plugin, SimpleNS uses:
+
+```javascript
+defaultRateLimit = {
+  maxTokens: 100,
+  refillRate: 10  // tokens per second
+}
+```
+
+### Benefits
+
+- **Prevents provider rate limit errors**
+- **Maximizes throughput** while staying within limits
+---
+
+## Idempotency
+
+### Purpose
+
+Prevent duplicate notifications when:
+- Client retries request (network error)
+- System crashes and retries
+- Kafka redelivers same message
+
+### Implementation
+
+Idempotency is enforced using the auto-generated `notification_id` with atomic Lua scripts:
+
+**Redis Key Pattern:**
+```bash
+idempotency:<notification_id>
+```
+
+**Stored Record:**
+```javascript
+{
+  status: 'processing' | 'delivered' | 'failed',
+  retry_count: number,
+  updated_at: ISO8601
+}
+```
+
+### Flow
+
+<Steps>
+<Step>
+**Processor receives notification from Kafka**
+</Step>
+
+<Step>
+**Atomic lock acquisition** (Lua script):
+
+```javascript
+const lockResult = await tryAcquireProcessingLock(notificationId, retry_count);
+// Returns: { canProcess: true/false, isRetry: true/false }
+```
+
+The script:
+- Returns `0` if already delivered (skip)
+- Returns `0` if already processing (skip)
+- Returns `1` if first time (lock acquired)
+- Returns `2` if previously failed (retry allowed, lock acquired)
+</Step>
+
+<Step>
+**Deliver notification**
+</Step>
+
+<Step>
+**Update cache on success:**
+
+```javascript
+await setDelivered(notificationId, retry_count);
+// Sets key with TTL = IDEMPOTENCY_TTL_SECONDS
+```
+</Step>
+
+<Step>
+**Update cache on failure:**
+
+```javascript
+await setFailed(notificationId, retry_count);
+// Allows future retry attempts
+```
+</Step>
+</Steps>
+
+### TTL Configuration
+
+```bash
+IDEMPOTENCY_TTL_SECONDS=86400  # 24 hours (default)
+PROCESSING_TTL_SECONDS=120    # 2 minutes lock timeout (default)
+```
+
+<Callout type="warn">
+Increase `IDEMPOTENCY_TTL_SECONDS` for longer idempotency guarantees, decrease to save Redis memory.
+</Callout>
+
+---
+
+## Webhooks
+
+Send real-time delivery status updates to your application.
+
+### Configuration
+
+Include `webhook_url` in notification request:
+
+```json
+{
+  "webhook_url": "https://your-app.com/webhooks/notifications",
+  "channel": ["email"],
+  ...
+}
+```
+
+### Webhook Payload
+
+SimpleNS sends a POST request to your webhook URL:
+
+```json
+{
+  "request_id": "req-456",
+  "client_id": "client-123",
+  "notification_id": "abc123",
+  "status": "DELIVERED",
+  "channel": "email",
+  "message": "Notification sent successfully",
+  "occurred_at": "2024-01-01T12:00:00.000Z"
+}
+```
+
+### Webhook Retries
+
+If webhook delivery fails:
+- **Retry with exponential backoff** (3 attempts max)
+- **Timeout**: 30 seconds per attempt
+- **5xx errors**: Retry with backoff (1s, 2s, 4s)
+- **4xx errors**: No retry (client error)
+- **Final failure logged** but doesn't affect notification status
+
+> [!IMPORTANT]
+> The notification status is updated in MongoDB regardless of webhook success. Webhook failures are logged but don't block the delivery pipeline.
+
+### Security
+
+**Verify webhook source:**
+1. Use HTTPS endpoints only
+2. Whitelist SimpleNS IP addresses
+3. Validate payload structure
+
+**Handle idempotency:**
+- Process duplicate webhooks gracefully
+- Use `notification_id` for deduplication
+
+### Debugging
+
+**Check webhook logs:**
+```bash
+docker-compose logs worker | grep webhook
+```
+
+**Grafana query:**
+```bash
+{service="worker"} |= "webhook"
+```
+
+---
+
+## Crash Recovery
+
+The Recovery Service detects notifications stuck due to crashes or timeouts and creates alerts for manual inspection.
+
+### Detection
+
+**Every 60 seconds** (configurable via `RECOVERY_POLL_INTERVAL_MS`), the service scans for:
+
+**1. Stuck Processing Notifications**
+```javascript
+status === 'processing' AND updated_at < now - PROCESSING_STUCK_THRESHOLD_MS
+```
+Cross-references with Redis idempotency status to detect ghost deliveries.
+
+**2. Orphaned Pending Notifications**
+```javascript
+status === 'pending' AND (
+  // Non-scheduled: updated_at older than threshold
+  (scheduled_at is null AND updated_at < threshold) OR
+  // Scheduled: scheduled_at has passed and threshold exceeded
+  (scheduled_at <= threshold)
+)
+```
+
+**3. Ghost Delivery Notifications**
+```javascript
+redis_status == 'delivered' AND notification_status == "processing"
+```
+
+### Configuration
+
+```bash
+RECOVERY_POLL_INTERVAL_MS=60000            # Scan every 60 seconds
+PROCESSING_STUCK_THRESHOLD_MS=300000       # 5 minutes
+PENDING_STUCK_THRESHOLD_MS=300000          # 5 minutes
+RECOVERY_BATCH_SIZE=50                     # Process 50 per scan
+CLEANUP_RESOLVED_ALERTS_RETENTION_MS=86400000  # 24 hours
+```
+
+### Recovery Logic
+
+When stuck notification detected:
+
+<Steps>
+<Step>
+**Claim notification atomically** (prevents race conditions between recovery workers)
+</Step>
+
+<Step>
+**Check Redis idempotency status:**
+- **`delivered`** → Ghost delivery! Auto-update MongoDB, create status outbox entry
+- **`failed`** with retries remaining → Create alert for manual retry
+- **`failed`** with max retries → Mark as failed, create status outbox entry
+- **`processing`** or no record → Create alert for manual inspection
+</Step>
+
+<Step>
+**Create alert** (if not auto-resolved):
+
+```javascript
+{
+  alert_type: 'stuck_processing' | 'orphaned_pending',
+  notification_id: '...',
+  reason: 'Notification stuck in processing...',
+  redis_status: 'processing',
+  db_status: 'processing',
+  retry_count: 2,
+  resolved: false
+}
+```
+</Step>
+
+<Step>
+**Dashboard displays alerts** for manual intervention
+</Step>
+</Steps>
+
+### Resolution
+
+<Tabs items={['Via Dashboard', 'Automatic']}>
+<Tab value="Via Dashboard">
+
+1. Navigate to **Alerts** page
+2. View alert details
+3. Actions:
+   - **Retry**: Re-publish notification to Kafka
+   - **Resolve**: Mark alert as resolved (keeps notification failed)
+
+</Tab>
+<Tab value="Automatic">
+
+- **Ghost deliveries**: Auto-resolved when Redis status is `delivered`
+- **Auto-resolve**: Alerts for delivered/failed notifications are cleaned up
+- **Cleanup**: Resolved alerts deleted after 24 hours (configurable)
+
+</Tab>
+</Tabs>
+
+### Why Crashes Happen
+
+- Worker process killed (OOM, SIGKILL)
+- Network partition
+- Kafka connection lost
+- Processing timeout exceeded
+
+<Callout type="info">
+Recovery Service ensures no notification is permanently stuck. It uses **distributed locking** (`recovery_claimed_by` field) to support multiple recovery worker instances.
+</Callout>
+
+---
+
+## Scheduled Delivery
+
+Queue notifications for future delivery using `scheduled_at` field.
+
+### Usage
+
+```json
+{
+  "scheduled_at": "2024-12-31T23:59:59Z",  // ISO 8601 UTC
+  "channel": ["email"],
+  ...
+}
+```
+
+### How It Works
+
+<Steps>
+<Step>
+**API receives notification with scheduled_at**
+</Step>
+
+<Step>
+**Background worker publishes to `delayed_notification` topic**
+</Step>
+
+<Step>
+**Delayed processor consumes and adds to Redis ZSET**
+
+```javascript
+await redis.zadd('delayed_queue', scheduled_timestamp, JSON.stringify(event));
+```
+</Step>
+
+<Step>
+**Poller runs every 1 second (two-phase commit):**
+
+**Claim Phase:** Atomically find and lock due events
+```lua
+-- Get due events
+local events = redis.call('ZRANGEBYSCORE', queue_key, '-inf', now, 'LIMIT', 0, limit)
+-- Claim each with worker ID
+redis.call('SET', claim_key, worker_id, 'NX', 'EX', 60)
+```
+</Step>
+
+<Step>
+**Process Phase:** Publish to channel topic (e.g., `email_notification`)
+</Step>
+
+<Step>
+**Confirm Phase:** Remove from queue ONLY after successful publish
+
+```lua
+-- Verify we still hold the claim
+if redis.call('GET', claim_key) == worker_id then
+    redis.call('ZREM', queue_key, event)
+    redis.call('DEL', claim_key)
+end
+```
+</Step>
+
+<Step>
+**Unified processor delivers** (same as immediate notification)
+</Step>
+</Steps>
+
+### Poller Failure Handling
+
+If publishing to Kafka fails:
+- Increment poller retry count
+- Re-add to queue with exponential backoff (5s, 10s, 20s, 40s, max 60s)
+- If max retries exceeded (`MAX_POLLER_RETRIES=3`), mark as failed
+
+### Configuration
+
+```bash
+DELAYED_POLL_INTERVAL_MS=1000   # Check every 1 second
+DELAYED_BATCH_SIZE=10           # Process 10 at a time
+MAX_POLLER_RETRIES=3            # Max retries before failure
+```
+
+### Use Cases
+
+- **Reminders**: "Meeting in 1 hour"
+- **Follow-ups**: "Haven't heard from you in 3 days"
+- **Campaigns**: "Black Friday sale starts at midnight"
+- **Drip campaigns**: Series of emails over days/weeks

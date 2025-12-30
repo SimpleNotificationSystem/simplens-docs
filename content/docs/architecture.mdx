@@ -8,6 +8,7 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Target, Plug, TrendingUp, Shield, Leaf, MessageSquare, Database, BarChart } from 'lucide-react';
 
 ## High-Level Architecture
 
@@ -18,16 +19,16 @@ SimpleNS follows an event-driven, microservices-inspired architecture where each
 ### Core Principles
 
 <Cards>
-  <Card title="🎯 Separation of Concerns">
+  <Card title={<><Target className="inline w-5 h-5 mr-2" /> Separation of Concerns</>}>
     **Orchestration** (SimpleNS Core) handles retries, rate limiting, scheduling, recovery. **Delivery** (Plugins) handles actual notification sending via provider APIs.
   </Card>
-  <Card title="🔌 Plugin-Based Extensibility">
+  <Card title={<><Plug className="inline w-5 h-5 mr-2" /> Plugin-Based Extensibility</>}>
     Swap providers without changing application code. Community-driven ecosystem with easy custom integrations.
   </Card>
-  <Card title="📈 Horizontal Scalability">
+  <Card title={<><TrendingUp className="inline w-5 h-5 mr-2" /> Horizontal Scalability</>}>
     Scale each component independently with partition-based parallelism and load distribution across workers.
   </Card>
-  <Card title="🛡️ Fault Tolerance">
+  <Card title={<><Shield className="inline w-5 h-5 mr-2" /> Fault Tolerance</>}>
     Outbox pattern prevents message loss. Crash recovery for stuck notifications. Automatic retries with exponential backoff.
   </Card>
 </Cards>
@@ -51,29 +52,25 @@ SimpleNS follows an event-driven, microservices-inspired architecture where each
 
 **Data Flow:**
 
-<Steps>
-<Step>
-Receives HTTP POST request to `/api/notification` or `/api/notification/batch` endpoints
-</Step>
+<Mermaid
+  chart="
+flowchart TD
+    A[HTTP POST Request] --> B[Validate Authentication & Payload]
+    B --> C[Write to MongoDB Transaction]
+    C --> D[Create Notification Document]
+    C --> E[Create Outbox Entry]
+    D --> F{Request ID + Channel Exists?}
+    E --> F
+    F -->|No| G[Return HTTP 202 Accepted]
+    F -->|Yes| H[Return HTTP 409 Conflict]
+    G --> I[Background Worker Picks Up]
+    
+    style A fill:#3b82f6,stroke:#2563eb,color:#fff
+    style G fill:#22c55e,stroke:#16a34a,color:#fff
+    style H fill:#ef4444,stroke:#dc2626,color:#fff
+    style I fill:#8b5cf6,stroke:#7c3aed,color:#fff
+"/>
 
-<Step>
-Validates authentication using configured `NS_API_KEY` and payload using zod schema
-</Step>
-
-<Step>
-Writes to MongoDB in transaction:
-- Creates notification document
-- Creates outbox entry
-</Step>
-
-<Step>
-Returns **HTTP 202 Accepted** Status if notification is accepted for processing or returns a **HTTP 409 Conflict** if already the same (request_id + channel) exists in notification collection 
-</Step>
-
-<Step>
-Background worker picks up from outbox
-</Step>
-</Steps>
 
 ### Background Worker
 
@@ -94,47 +91,37 @@ Background worker picks up from outbox
 
 **Data Flow:**
 
-<Steps>
-<Step>
-Polls outbox for unpublished entries
-</Step>
+<Mermaid
+  chart="
+flowchart TD
+    A[Poll Outbox] --> B[Claim Entries with Worker ID]
+    B --> C{Determine Target Topic}
+    C -->|Immediate| D[Channel-Specific Topic]
+    C -->|Scheduled| E[delayed_notification Topic]
+    D --> F[Publish to Kafka]
+    E --> F
+    F --> G[Mark Outbox as Published]
+    G --> H[Consume Status Updates]
+    H --> I[Update MongoDB Collections]
+    I -->K[Send Webhook]
+    
+    style A fill:#3b82f6,stroke:#2563eb,color:#fff
+    style F fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style K fill:#22c55e,stroke:#16a34a,color:#fff
+"/>
 
-<Step>
-Claims entries with worker ID and timestamp
-</Step>
 
-<Step>
-Determines target Kafka topic based on:
-- Immediate notification → channel-specific topic (e.g., `email_notification`)
-- Scheduled notification → `delayed_notification` topic
-</Step>
+**Ghost Delivery and Permanently Failed Status Update Flow**
 
-<Step>
-Publishes to Kafka
-</Step>
+<Mermaid
+  chart="
+flowchart LR
+    A[Poll status_outbox] --> B[Publish to notification_status Topic]
+    
+    style A fill:#3b82f6,stroke:#2563eb,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+"/>
 
-<Step>
-Marks outbox entry as published
-</Step>
-
-<Step>
-Consumes status updates from `notification_status` topic and updates `outbox` and `notification` collections in MongoDB
-</Step>
-
-<Step>
-Sends webhooks (if configured)
-</Step>
-</Steps>
-
-**Ghost Delivery Status Update Flow**
-<Steps>
-<Step>
-Polls `status_outbox` collection for unprocessed events
-</Step>
-<Step>
-Publishes status to `notification_status` topic
-</Step>
-</Steps>
 
 ### Unified Notification Processor
 
@@ -178,48 +165,30 @@ If the error is **retryable** (e.g., rate limit, timeout), SimpleNS retries with
 
 **Data Flow:**
 
-<Steps>
-<Step>
-Consumes message from Kafka topic
-</Step>
+<Mermaid
+  chart="
+flowchart TD
+    A[Consume from Kafka Topic] --> B[Check Idempotency]
+    B --> C[Acquire Processing Lock]
+    C --> D[Rate Limit Check]
+    D --> E[Validate Against Plugin Schema]
+    E --> F[sendWithFallback]
+    F --> G{Success?}
+    G -->|Yes| H[Publish 'delivered' Status]
+    G -->|No| I{Retryable?}
+    I -->|Yes| J[Calculate Backoff]
+    J --> K[Publish to delayed_notification]
+    I -->|No| L[Mark 'failed']
+    H --> M[Release Lock & Update Cache]
+    K --> M
+    L --> M
+    
+    style A fill:#3b82f6,stroke:#2563eb,color:#fff
+    style H fill:#22c55e,stroke:#16a34a,color:#fff
+    style L fill:#ef4444,stroke:#dc2626,color:#fff
+    style K fill:#f59e0b,stroke:#d97706,color:#fff
+"/>
 
-<Step>
-Checks idempotency (Redis cache by `notification_id`)
-</Step>
-
-<Step>
-Acquires processing lock (Redis)
-</Step>
-
-<Step>
-Rate limit check (wait if bucket empty)
-</Step>
-
-<Step>
-Validates notification against plugin schema
-</Step>
-
-<Step>
-Calls `sendWithFallback(channel, notification)`:
-- Tries default provider first
-- On non-retryable failure, validates against fallback provider schema
-- Tries fallback provider if available
-</Step>
-
-<Step>
-On success: Publish `delivered` status
-</Step>
-
-<Step>
-On failure:
-- If retryable: Calculate backoff, publish to `delayed_notification` topic for retry
-- If non-retryable or max retries exceeded: Mark `failed`
-</Step>
-
-<Step>
-Release lock, update idempotency cache
-</Step>
-</Steps>
 
 ### Delayed Processor
 
@@ -248,43 +217,32 @@ If a worker crashes between claim and confirm, the claim expires after 60 second
 
 **Data Flow:**
 
-<Steps>
-<Step>
-Worker publishes notification to `delayed_notification` topic
-</Step>
+<Mermaid
+  chart="
+flowchart TD
+    A[Worker Publishes to delayed_notification] --> B[Delayed Processor Consumes]
+    B --> C[Extract scheduled_at]
+    C --> D[Add to Redis ZSET]
+    D --> E[Poller Runs Every 1s]
+    E --> F[Claim Due Events with Worker ID]
+    F --> G{Events Claimed?}
+    G -->|Yes| H[Process: Publish to Channel Topic]
+    G -->|No| E
+    H --> I{Publish Success?}
+    I -->|Yes| J[Confirm: Remove from Queue]
+    I -->|No| K[Increment Retry Count]
+    K --> L{Max Retries?}
+    L -->|No| M[Re-add with Backoff]
+    L -->|Yes| N[Publish 'failed' Status]
+    M --> E
+    J --> O[Unified Processor Delivers]
+    
+    style A fill:#3b82f6,stroke:#2563eb,color:#fff
+    style J fill:#22c55e,stroke:#16a34a,color:#fff
+    style N fill:#ef4444,stroke:#dc2626,color:#fff
+    style O fill:#8b5cf6,stroke:#7c3aed,color:#fff
+"/>
 
-<Step>
-Delayed processor consumes, extracts `scheduled_at`
-</Step>
-
-<Step>
-Adds to Redis ZSET: `ZADD delay_queue <timestamp> <notification_json>`
-</Step>
-
-<Step>
-Poller runs every 1 second:
-- **Claim:** Uses Lua script to atomically find due events and lock them with worker ID
-- `ZRANGEBYSCORE delay_queue -inf <now> LIMIT 0 10`
-- `SET delayed_claim:<notification_id> <worker_id> NX EX 60`
-</Step>
-
-<Step>
-For each claimed event:
-- **Process:** Publishes payload to channel topic (e.g., `email_notification`)
-- **Confirm:** Removes from queue and clears claim (only if worker still holds claim)
-</Step>
-
-<Step>
-On publish failure:
-- Increments poller retry count
-- Re-adds to queue with exponential backoff (5s, 10s, 20s, 40s, max 60s)
-- If max retries exceeded, publishes `failed` status
-</Step>
-
-<Step>
-Unified processor picks up from channel topic and delivers
-</Step>
-</Steps>
 
 ### Recovery Service
 
@@ -309,27 +267,8 @@ Unified processor picks up from channel topic and delivers
 
 **Data Flow:**
 
-<Steps>
-<Step>
-Query MongoDB for notifications in `processing` state
-</Step>
+![Recovery Flow](/RecoveryFlow.png)
 
-<Step>
-Filter where `updated_at < now - PROCESSING_STUCK_THRESHOLD_MS`
-</Step>
-
-<Step>
-Create alert document with notification details
-</Step>
-
-<Step>
-Dashboard displays alerts
-</Step>
-
-<Step>
-Admin can manually retry or resolve
-</Step>
-</Steps>
 
 ### Admin Dashboard
 
@@ -338,6 +277,7 @@ Admin can manually retry or resolve
 **Key Features:**
 - Dashboard home with statistics
 - Events explorer with search and filtering
+- Send page to send single and batch notifications from the admin dashboard
 - Failed events page with retry capabilities
 - Alerts management
 - Analytics and charts
@@ -353,6 +293,7 @@ Admin can manually retry or resolve
 - `/` - Dashboard home
 - `/events` - All notifications
 - `/events/[id]` - Notification details
+- `/send` - Send notifications from admin dashboard
 - `/failed` - Failed notifications
 - `/alerts` - System alerts
 - `/analytics` - Charts and graphs
@@ -362,16 +303,16 @@ Admin can manually retry or resolve
 ## Infrastructure Components
 
 <Cards>
-  <Card title="🍃 MongoDB">
+  <Card title={<><Leaf className="inline w-5 h-5 mr-2" /> MongoDB</>}>
     Persistent storage for notifications, outbox, and alerts. Replica set required.
   </Card>
-  <Card title="📨 Kafka">
+  <Card title={<><MessageSquare className="inline w-5 h-5 mr-2" /> Kafka</>}>
     Event streaming and message queue with channel-specific topics.
   </Card>
-  <Card title="🔴 Redis">
+  <Card title={<><Database className="inline w-5 h-5 mr-2" /> Redis</>}>
     Caching, delay queue, rate limiting, and processing locks.
   </Card>
-  <Card title="📊 Loki + Grafana">
+  <Card title={<><BarChart className="inline w-5 h-5 mr-2" /> Loki + Grafana</>}>
     Centralized logging and visualization across all services.
   </Card>
 </Cards>

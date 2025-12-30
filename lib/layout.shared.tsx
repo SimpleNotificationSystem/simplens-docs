@@ -1,4 +1,3 @@
-import { div } from 'framer-motion/client';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import Image from 'next/image';
 
