@@ -1,0 +1,284 @@
+---
+title: Plugin Interface
+description: Complete SimpleNSProvider interface documentation with method explanations and examples.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+
+## Overview
+
+The `SimpleNSProvider<T>` interface is the core contract that all notification providers must implement. This interface ensures SimpleNS can uniformly handle rate limiting, validation, and delivery across all provider types.
+
+```typescript
+interface SimpleNSProvider<TNotification extends BaseNotification = BaseNotification> {
+  readonly manifest: ProviderManifest;
+  
+  getNotificationSchema(): z.ZodSchema<TNotification>;
+  getRecipientSchema(): z.ZodObject<Record<string, z.ZodTypeAny>>;
+  getContentSchema(): z.ZodObject<Record<string, z.ZodTypeAny>>;
+  getRateLimitConfig(): RateLimitConfig;
+  
+  initialize(config: ProviderConfig): Promise<void>;
+  healthCheck(): Promise<boolean>;
+  send(notification: TNotification): Promise<DeliveryResult>;
+  shutdown(): Promise<void>;
+}
+```
+
+---
+
+## Generic Type Parameter
+
+The interface accepts a generic type `TNotification` that extends `BaseNotification`:
+
+```typescript
+// Your custom notification type
+type MyEmailNotification = z.infer<typeof myEmailSchema>;
+
+// Use it in your provider
+class MyProvider implements SimpleNSProvider<MyEmailNotification> {
+  // TypeScript now enforces correct types throughout
+}
+```
+
+This ensures the `send()` method receives correctly typed notification objects based on your schema.
+
+---
+
+## Properties
+
+### `manifest` (readonly)
+
+The provider manifest containing metadata used by SimpleNS for registration and display.
+
+```typescript
+readonly manifest: ProviderManifest = {
+  name: '@simplens/twilio-sms',
+  version: '1.0.0',
+  channel: 'sms',
+  displayName: 'Twilio SMS',
+  description: 'Send SMS notifications via Twilio',
+  author: 'SimpleNS Team',
+  requiredCredentials: ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM_NUMBER'],
+};
+```
+
+<Callout type="info">
+See [Manifest Configuration](/docs/sdk/manifest) for detailed field documentation.
+</Callout>
+
+---
+
+## Schema Methods
+
+### `getNotificationSchema()`
+
+Returns the complete Zod schema for validating notification payloads before delivery.
+
+```typescript
+getNotificationSchema(): z.ZodSchema<TNotification> {
+  return createNotificationSchema('email', emailRecipientSchema, emailContentSchema);
+}
+```
+
+**Purpose**: SimpleNS calls this to validate incoming notifications against your provider's requirements.
+
+---
+
+### `getRecipientSchema()`
+
+Returns the Zod schema for recipient-specific fields.
+
+```typescript
+getRecipientSchema(): z.ZodObject<Record<string, z.ZodTypeAny>> {
+  return emailRecipientSchema;
+}
+```
+
+**Channel-specific examples**:
+
+| Channel   | Schema               | Fields                |
+|:----------|:---------------------|:----------------------|
+| Email     | `emailRecipientSchema`    | `user_id`, `email`    |
+| SMS       | `smsRecipientSchema`      | `user_id`, `phone`    |
+| WhatsApp  | `whatsappRecipientSchema` | `user_id`, `phone`    |
+| Push      | `pushRecipientSchema`     | `user_id`, `device_token` |
+
+---
+
+### `getContentSchema()`
+
+Returns the Zod schema for message content fields.
+
+```typescript
+getContentSchema(): z.ZodObject<Record<string, z.ZodTypeAny>> {
+  return emailContentSchema;
+}
+```
+
+**Channel-specific examples**:
+
+| Channel   | Schema               | Fields                      |
+|:----------|:---------------------|:----------------------------|
+| Email     | `emailContentSchema` | `subject`, `html`, `text`   |
+| SMS       | `smsContentSchema`   | `message` (max 1600 chars)  |
+| WhatsApp  | `whatsappContentSchema` | `message`                |
+
+---
+
+### `getRateLimitConfig()`
+
+Returns the rate limit configuration for this provider using a token bucket algorithm.
+
+```typescript
+getRateLimitConfig(): RateLimitConfig {
+  return {
+    maxTokens: 100,   // Maximum burst capacity
+    refillRate: 10,   // Tokens added per second
+  };
+}
+```
+
+<Callout type="tip">
+Set these values based on your provider's API rate limits. For example, if your API allows 600 requests per minute, use `maxTokens: 100` and `refillRate: 10`.
+</Callout>
+
+---
+
+## Lifecycle Methods
+
+### `initialize(config)`
+
+Called once when SimpleNS loads the provider. Use this to set up API clients, validate credentials, and establish connections.
+
+```typescript
+async initialize(config: ProviderConfig): Promise<void> {
+  this.accountSid = config.credentials['TWILIO_ACCOUNT_SID'];
+  this.authToken = config.credentials['TWILIO_AUTH_TOKEN'];
+  this.fromNumber = config.credentials['TWILIO_FROM_NUMBER'];
+  
+  // Initialize Twilio client
+  this.client = twilio(this.accountSid, this.authToken);
+}
+```
+
+**The `ProviderConfig` object**:
+
+```typescript
+interface ProviderConfig {
+  id: string;                           // Unique provider instance ID
+  credentials: Record<string, string>;  // API keys, tokens, etc.
+  options?: Record<string, unknown>;    // Optional provider-specific settings
+}
+```
+
+---
+
+### `healthCheck()`
+
+Called after initialization and periodically for health monitoring. Return `true` if the provider can send notifications.
+
+```typescript
+async healthCheck(): Promise<boolean> {
+  try {
+    // Verify credentials are valid
+    await this.client.api.accounts(this.accountSid).fetch();
+    return true;
+  } catch {
+    return false;
+  }
+}
+```
+
+---
+
+### `shutdown()`
+
+Called when SimpleNS is shutting down. Clean up resources, close connections, and clear timers.
+
+```typescript
+async shutdown(): Promise<void> {
+  // Close any open connections
+  await this.client?.close();
+  this.client = null;
+}
+```
+
+---
+
+## Delivery Method
+
+### `send(notification)`
+
+The core method where actual notification delivery happens. This is called after rate limiting and validation.
+
+```typescript
+async send(notification: TNotification): Promise<DeliveryResult> {
+  try {
+    const message = await this.client.messages.create({
+      body: notification.content.message,
+      from: this.fromNumber,
+      to: notification.recipient.phone,
+    });
+    
+    return {
+      success: true,
+      messageId: message.sid,
+      providerResponse: message,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        code: error.code || 'SEND_FAILED',
+        message: error.message,
+        retryable: this.isRetryable(error),
+      },
+    };
+  }
+}
+```
+
+---
+
+## DeliveryResult Interface
+
+The `send()` method must return a `DeliveryResult`:
+
+```typescript
+interface DeliveryResult {
+  success: boolean;           // Whether delivery succeeded
+  messageId?: string;         // Provider's message ID
+  providerResponse?: unknown; // Raw response for debugging
+  error?: {
+    code: string;             // Error code
+    message: string;          // Human-readable message
+    retryable: boolean;       // Whether SimpleNS should retry
+  };
+}
+```
+
+<Callout type="warning">
+Setting `retryable: true` tells SimpleNS to retry the notification with exponential backoff. Use this for transient errors (rate limits, timeouts). Set to `false` for permanent failures (invalid recipient, authentication errors).
+</Callout>
+
+---
+
+## Complete Example
+
+For a full, production-ready provider implementation, see the official Nodemailer-Gmail plugin:
+
+<Cards>
+  <Card
+    title="📦 plugin-nodemailer-gmail"
+    description="A complete Gmail/SMTP email provider implementation using Nodemailer. Includes all schema definitions, lifecycle methods, and error handling patterns."
+    href="https://github.com/SimpleNotificationSystem/plugin-nodemailer-gmail"
+  />
+</Cards>
+
+<Callout type="tip">
+Refer the [Building a Plugin Guide](./building-plugin) for scafolding a new simplens plugin project with boilerplate code so that you can just write the notification delivery logic alone.
+</Callout>
+

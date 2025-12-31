@@ -1,0 +1,423 @@
+---
+title: Building a Plugin
+description: Scaffold new SimpleNS notification plugins with the @simplens/create-simplens-plugin CLI tool
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { File, Folder, Files } from 'fumadocs-ui/components/files';
+
+The `@simplens/create-simplens-plugin` CLI tool generates all required boilerplate for building SimpleNS notification plugins, so you can focus on writing the delivery logic.
+
+## Quick Start
+
+The fastest way to create a new plugin is with a single command:
+
+```bash
+npx @simplens/create-simplens-plugin
+```
+
+This launches an **interactive wizard** that guides you through configuration step by step.
+
+---
+
+## Installation Methods
+
+<Tabs items={['npx (Recommended)', 'Global Install']}>
+  <Tab value="npx (Recommended)">
+    Run directly without installation:
+    ```bash
+    npx @simplens/create-simplens-plugin
+    ```
+  </Tab>
+  <Tab value="Global Install">
+    Install globally for frequent use:
+    ```bash
+    npm install -g @simplens/create-simplens-plugin
+    create-simplens-plugin
+    ```
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+  Requires **Node.js 18+** to run.
+</Callout>
+
+---
+
+## Interactive Mode
+
+When you run the CLI without flags, you'll be guided through an interactive wizard:
+
+<Steps>
+  <Step>
+    ### Plugin Name
+    Enter a kebab-case identifier (e.g., `discord`, `telegram`, `twilio-sms`).
+    
+    <Callout type="warn">
+      - Must be lowercase with hyphens only
+      - Cannot start with `plugin-` (this is added automatically)
+      - Example valid names: `discord`, `slack-webhook`, `twilio-sms`
+    </Callout>
+  </Step>
+  
+  <Step>
+    ### Display Name
+    Human-readable name (auto-generated from plugin name as PascalCase).  
+    Examples: `Discord`, `SlackWebhook`, `TwilioSms`
+  </Step>
+  
+  <Step>
+    ### Description
+    Brief description of what your plugin does.  
+    Must be at least 10 characters.
+  </Step>
+  
+  <Step>
+    ### Channel Identifier
+    Lowercase alphanumeric channel ID used for routing notifications.  
+    Defaults to the plugin name without hyphens (e.g., `twilio-sms` → `twiliosms`).
+  </Step>
+  
+  <Step>
+    ### Author Information
+    - **Author name** (required)
+    - **Author email** (optional)
+  </Step>
+  
+  <Step>
+    ### Output Directory
+    Where to create the plugin. Defaults to `plugin-<name>`.
+  </Step>
+  
+  <Step>
+    ### Git & Dependencies
+    - Initialize a git repository? (Yes/No)
+    - Install npm dependencies after generation? (Yes/No)
+  </Step>
+</Steps>
+
+### Example Session
+
+```ansi
+$ npx @simplens/create-simplens-plugin
+
+🔌 Create SimpleNS Plugin
+
+? Plugin name: discord
+? Display name: Discord
+? Description: Send notifications via Discord webhooks
+? Channel identifier: discord
+? Author name: John Doe
+? Author email: john@example.com
+? Output directory: plugin-discord
+? Initialize git repository? Yes
+? Install dependencies after generation? Yes
+
+✅ Plugin created successfully!
+
+📁 Created plugin-discord/
+   ├── package.json
+   ├── tsconfig.json
+   ├── src/
+   │   ├── index.ts         ← Implement your send() logic here
+   │   └── index.test.ts
+   ├── README.md
+   └── .gitignore
+
+🚀 Next steps:
+   1. cd plugin-discord
+   2. Edit src/index.ts        # Add your delivery logic
+   3. npm test                 # Run tests
+   4. npm run build            # Build for publishing
+   5. npm publish --access public
+```
+
+---
+
+## Non-Interactive Mode (CLI Flags)
+
+For automation, CI/CD pipelines, or scripting, use command-line flags to skip prompts entirely.
+
+### Command Reference
+
+```bash
+create-simplens-plugin [options]
+```
+
+| Option | Alias | Description | Default |
+|--------|-------|-------------|---------|
+| `--name <name>` | `-n` | Plugin name (kebab-case) | *required with --yes* |
+| `--channel <channel>` | `-c` | Channel identifier | Plugin name without hyphens |
+| `--directory <dir>` | `-d` | Output directory | `plugin-<name>` |
+| `--yes` | `-y` | Skip prompts, use defaults | `false` |
+| `--no-git` | — | Skip git initialization | `false` |
+| `--no-install` | — | Skip npm install | `false` |
+| `--help` | `-h` | Show help | — |
+| `--version` | `-V` | Show version | — |
+
+### Quick Scaffolding
+
+Create a plugin with minimal input:
+
+```bash
+npx @simplens/create-simplens-plugin --name discord --yes
+```
+
+This uses sensible defaults for all other options.
+
+### Full Customization
+
+Specify all options explicitly:
+
+```bash
+npx @simplens/create-simplens-plugin \
+  --name twilio-sms \
+  --channel sms \
+  --directory ./plugins/twilio-sms \
+  --no-git \
+  --no-install
+```
+
+### CI/CD Example
+
+```yaml title="github-actions.yml"
+- name: Generate Plugin
+  run: |
+    npx @simplens/create-simplens-plugin \
+      --name ${{ inputs.plugin_name }} \
+      --channel ${{ inputs.channel }} \
+      --yes \
+      --no-git
+```
+
+<Callout type="error">
+  When using `--yes`, the `--name` flag is **required**. The CLI will exit with an error if not provided.
+</Callout>
+
+---
+
+## Generated Files
+
+The CLI generates a complete, ready-to-develop plugin structure:
+
+<Files>
+  <Folder name="plugin-<name>" defaultOpen>
+    <File name="package.json" />
+    <File name="tsconfig.json" />
+    <Folder name="src" defaultOpen>
+      <File name="index.ts" />
+      <File name="index.test.ts" />
+    </Folder>
+    <File name="README.md" />
+    <File name=".gitignore" />
+  </Folder>
+</Files>
+
+### File Descriptions
+
+| File | Purpose |
+|------|---------|
+| `package.json` | NPM package config with `@simplens/sdk` dependency |
+| `tsconfig.json` | TypeScript configuration for ES modules |
+| `src/index.ts` | **Main provider class** — implement `send()` here |
+| `src/index.test.ts` | Vitest test suite with basic scaffolding |
+| `README.md` | Documentation template for your plugin |
+| `.gitignore` | Standard ignores for Node.js/TypeScript |
+
+---
+
+## Implementing Your Plugin
+
+After scaffolding, you need to implement the actual notification delivery logic.
+
+<Steps>
+  <Step>
+    ### Define Your Schemas
+    
+    In `src/index.ts`, customize the Zod schemas:
+    
+    ```typescript title="src/index.ts"
+    // Define who receives notifications
+    const recipientSchema = z.object({
+        channelId: z.string(),
+        userId: z.string().optional(),
+    });
+
+    // Define notification content
+    const contentSchema = z.object({
+        message: z.string(),
+        title: z.string().optional(),
+        embeds: z.array(z.object({
+            title: z.string(),
+            description: z.string(),
+        })).optional(),
+    });
+    ```
+  </Step>
+  
+  <Step>
+    ### Implement the `send()` Method
+    
+    Add your API client and delivery logic:
+    
+    ```typescript title="src/index.ts"
+    async send(notification: Notification): Promise<DeliveryResult> {
+        if (!this.config) {
+            return {
+                success: false,
+                error: { 
+                    code: 'NOT_INITIALIZED', 
+                    message: 'Provider not initialized', 
+                    retryable: false 
+                },
+            };
+        }
+
+        try {
+            const webhookUrl = this.config.credentials.webhook_url;
+            
+            await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: notification.content.message,
+                }),
+            });
+
+            return { success: true };
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    code: 'DELIVERY_FAILED',
+                    message: error.message,
+                    retryable: true,
+                },
+            };
+        }
+    }
+    ```
+  </Step>
+  
+  <Step>
+    ### Update the Manifest
+    
+    Add required credentials and update metadata:
+    
+    ```typescript title="src/index.ts"
+    readonly manifest: ProviderManifest = {
+        name: 'simplens-plugin-discord',
+        version: '1.0.0',
+        channel: 'discord',
+        displayName: 'Discord',
+        description: 'Send notifications via Discord webhooks',
+        author: 'Your Name',
+        homepage: 'https://github.com/your-repo',
+        requiredCredentials: ['webhook_url'],  // List required credentials
+    };
+    ```
+  </Step>
+  
+  <Step>
+    ### Add Tests
+    
+    Expand the generated test file with your specific test cases:
+    
+    ```typescript title="src/index.test.ts"
+    it('should send notification successfully', async () => {
+        // Mock your API client
+        vi.spyOn(global, 'fetch').mockResolvedValue({
+            ok: true,
+        } as Response);
+
+        await provider.initialize({ 
+            id: 'test', 
+            credentials: { webhook_url: 'https://discord.com/api/webhooks/...' }, 
+            options: {} 
+        });
+
+        const result = await provider.send({
+            id: 'test-1',
+            channel: 'discord' as const,
+            recipient: { channelId: '123' },
+            content: { message: 'Hello!' },
+            created_at: new Date(),
+        });
+
+        expect(result.success).toBe(true);
+    });
+    ```
+  </Step>
+  
+  <Step>
+    ### Build & Publish
+    
+    ```bash
+    # Build TypeScript
+    npm run build
+
+    # Run tests
+    npm test
+
+    # Publish to npm
+    npm publish --access public
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Default Configuration
+
+When using `--yes` mode, these defaults are applied:
+
+| Setting | Default Value |
+|---------|---------------|
+| Display Name | PascalCase of plugin name |
+| Description | `"Send notifications via <DisplayName>"` |
+| Channel | Plugin name without hyphens |
+| Author | `"Unknown"` |
+| Email | Empty |
+| Recipient Fields | `["userId"]` |
+| Content Fields | `["message"]` |
+| Directory | `plugin-<name>` |
+| Init Git | `true` |
+| Install Deps | `true` |
+
+---
+
+## Troubleshooting
+
+<Callout type="warn" title="Error: Plugin name is required when using --yes flag">
+  Always provide `--name` when using `--yes` mode:
+  ```bash
+  npx @simplens/create-simplens-plugin --yes --name my-plugin
+  ```
+</Callout>
+
+<Callout type="warn" title="Error: Plugin name must be lowercase kebab-case">
+  Use only lowercase letters, numbers, and hyphens. Don't include the `plugin-` prefix:
+  - ❌ `MyPlugin`, `Plugin-Discord`, `DISCORD`
+  - ✅ `discord`, `twilio-sms`, `slack-webhook`
+</Callout>
+
+<Callout type="info" title="Git not found, skipping repository initialization">
+  Install Git or use `--no-git` to skip this step.
+</Callout>
+
+---
+
+## Next Steps
+
+After creating your plugin:
+
+1. **Implement the `send()` method** with your delivery logic
+2. **Add comprehensive tests** for reliability
+3. **Update the README** with usage documentation
+4. **Publish to npm** with `npm publish --access public`
+5. **Install the plugin** in simplens-core using  `npm run plugin:install <npm_package_name>`
+
+For more details on the plugin SDK interface, see the [Plugin Interface](/docs/sdk/plugin-interface) documentation.

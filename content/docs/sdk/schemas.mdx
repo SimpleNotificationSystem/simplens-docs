@@ -1,0 +1,367 @@
+---
+title: Schemas
+description: Reusable Zod schemas for validating notification payloads in SimpleNS providers.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+## Overview
+
+The SDK provides pre-built [Zod](https://zod.dev) schemas that you can use directly or extend for your custom provider. Zod is re-exported from the SDK, so you don't need to install it separately.
+
+```typescript
+import { z, emailRecipientSchema, createNotificationSchema } from '@simplens/sdk';
+```
+
+---
+
+## Base Schemas
+
+### `baseRecipientSchema`
+
+The foundation for all recipient schemas. Contains the `user_id` field required for tracking.
+
+```typescript
+const baseRecipientSchema = z.object({
+  user_id: z.string(),
+});
+```
+
+**Fields**:
+| Field     | Type     | Description                    |
+|:----------|:---------|:-------------------------------|
+| `user_id` | `string` | Unique identifier for the user |
+
+---
+
+### `baseNotificationSchema`
+
+Common fields present in all notification payloads.
+
+```typescript
+const baseNotificationSchema = z.object({
+  notification_id: z.string(),
+  request_id: z.string().uuid(),
+  client_id: z.string().uuid(),
+  channel: z.string(),
+  provider: z.string().optional(),
+  variables: z.record(z.string(), z.string()).optional(),
+  webhook_url: z.string().url(),
+  retry_count: z.number().int().min(0),
+  created_at: z.coerce.date(),
+});
+```
+
+**Fields**:
+| Field             | Type                         | Description                           |
+|:------------------|:-----------------------------|:--------------------------------------|
+| `notification_id` | `string`                     | MongoDB ObjectId as string            |
+| `request_id`      | `string` (UUID)              | Unique request identifier             |
+| `client_id`       | `string` (UUID)              | Client application identifier         |
+| `channel`         | `string`                     | Channel name (email, sms, etc.)       |
+| `provider`        | `string?`                    | Optional provider override            |
+| `variables`       | `Record<string, string>?`    | Template variables for substitution   |
+| `webhook_url`     | `string` (URL)               | URL for status callbacks              |
+| `retry_count`     | `number` (int >= 0)          | Current retry attempt number          |
+| `created_at`      | `Date`                       | Notification creation timestamp       |
+
+---
+
+## Recipient Schemas
+
+These schemas extend `baseRecipientSchema` with channel-specific fields.
+
+<Tabs items={['Email', 'SMS', 'WhatsApp', 'Push']}>
+  <Tab value="Email">
+### `emailRecipientSchema`
+
+```typescript
+const emailRecipientSchema = baseRecipientSchema.extend({
+  email: z.string().email(),
+});
+```
+
+| Field     | Type                | Description               |
+|:----------|:--------------------|:--------------------------|
+| `user_id` | `string`            | User identifier           |
+| `email`   | `string` (email)    | Valid email address       |
+
+**Example**:
+```json
+{
+  "user_id": "usr_12345",
+  "email": "user@example.com"
+}
+```
+  </Tab>
+  <Tab value="SMS">
+### `smsRecipientSchema`
+
+```typescript
+const smsRecipientSchema = baseRecipientSchema.extend({
+  phone: z.string(),
+});
+```
+
+| Field     | Type     | Description               |
+|:----------|:---------|:--------------------------|
+| `user_id` | `string` | User identifier           |
+| `phone`   | `string` | Phone number (E.164)      |
+
+**Example**:
+```json
+{
+  "user_id": "usr_12345",
+  "phone": "+14155551234"
+}
+```
+  </Tab>
+  <Tab value="WhatsApp">
+### `whatsappRecipientSchema`
+
+```typescript
+const whatsappRecipientSchema = baseRecipientSchema.extend({
+  phone: z.string(),
+});
+```
+
+| Field     | Type     | Description               |
+|:----------|:---------|:--------------------------|
+| `user_id` | `string` | User identifier           |
+| `phone`   | `string` | WhatsApp phone number     |
+
+**Example**:
+```json
+{
+  "user_id": "usr_12345",
+  "phone": "+14155551234"
+}
+```
+  </Tab>
+  <Tab value="Push">
+### `pushRecipientSchema`
+
+```typescript
+const pushRecipientSchema = baseRecipientSchema.extend({
+  device_token: z.string(),
+});
+```
+
+| Field          | Type     | Description               |
+|:---------------|:---------|:--------------------------|
+| `user_id`      | `string` | User identifier           |
+| `device_token` | `string` | FCM/APNs device token     |
+
+**Example**:
+```json
+{
+  "user_id": "usr_12345",
+  "device_token": "fcm_token_abc123..."
+}
+```
+  </Tab>
+</Tabs>
+
+---
+
+## Content Schemas
+
+### `emailContentSchema`
+
+Email message content with HTML/text body options.
+
+```typescript
+const emailContentSchema = z.object({
+  subject: z.string().optional(),
+  html: z.string().optional(),
+  text: z.string().optional(),
+}).refine(
+  data => data.html || data.text,
+  { message: 'Either html or text content is required' }
+);
+```
+
+<Callout type="warning">
+At least one of `html` or `text` must be provided. The schema uses a Zod refinement to enforce this.
+</Callout>
+
+| Field     | Type      | Description               |
+|:----------|:----------|:--------------------------|
+| `subject` | `string?` | Email subject line        |
+| `html`    | `string?` | HTML body content         |
+| `text`    | `string?` | Plain text body content   |
+
+**Example**:
+```json
+{
+  "subject": "Welcome to SimpleNS",
+  "html": "<h1>Hello!</h1><p>Welcome to our platform.</p>"
+}
+```
+
+---
+
+### `smsContentSchema`
+
+SMS message content with character limit.
+
+```typescript
+const smsContentSchema = z.object({
+  message: z.string().max(1600),
+});
+```
+
+| Field     | Type                   | Description                      |
+|:----------|:-----------------------|:---------------------------------|
+| `message` | `string` (max 1600)    | SMS message body                 |
+
+<Callout type="info">
+The 1600 character limit supports concatenated SMS messages. Most providers segment messages at 160 characters.
+</Callout>
+
+---
+
+### `whatsappContentSchema`
+
+WhatsApp message content.
+
+```typescript
+const whatsappContentSchema = z.object({
+  message: z.string(),
+});
+```
+
+| Field     | Type     | Description               |
+|:----------|:---------|:--------------------------|
+| `message` | `string` | WhatsApp message body     |
+
+---
+
+## Creating Complete Schemas
+
+### `createNotificationSchema()`
+
+Combines base schemas with channel-specific recipient and content schemas.
+
+```typescript
+function createNotificationSchema<
+  R extends z.ZodObject<Record<string, z.ZodTypeAny>>,
+  C extends z.ZodObject<Record<string, z.ZodTypeAny>>
+>(
+  channelName: string,
+  recipientSchema: R,
+  contentSchema: C
+)
+```
+
+**Parameters**:
+| Parameter         | Type       | Description                     |
+|:------------------|:-----------|:--------------------------------|
+| `channelName`     | `string`   | Channel identifier (e.g., 'email') |
+| `recipientSchema` | `ZodObject`| Recipient fields schema         |
+| `contentSchema`   | `ZodObject`| Content fields schema           |
+
+**Example**:
+```typescript
+import { 
+  createNotificationSchema, 
+  emailRecipientSchema, 
+  emailContentSchema,
+  z 
+} from '@simplens/sdk';
+
+// Create the complete schema
+const emailNotificationSchema = createNotificationSchema(
+  'email',
+  emailRecipientSchema,
+  emailContentSchema
+);
+
+// Infer the TypeScript type
+type EmailNotification = z.infer<typeof emailNotificationSchema>;
+```
+
+---
+
+## Extending Schemas
+
+You can extend the built-in schemas to add custom fields.
+
+<Accordions>
+  <Accordion title="Custom Email Recipient with Name">
+```typescript
+import { emailRecipientSchema, z } from '@simplens/sdk';
+
+const customRecipientSchema = emailRecipientSchema.extend({
+  name: z.string().optional(),
+  department: z.string().optional(),
+});
+
+// Use in your provider
+getRecipientSchema() { return customRecipientSchema; }
+```
+  </Accordion>
+  <Accordion title="Custom SMS Content with Sender ID">
+```typescript
+import { smsContentSchema, z } from '@simplens/sdk';
+
+const customSmsContentSchema = smsContentSchema.extend({
+  sender_id: z.string().max(11).optional(),
+  unicode: z.boolean().optional(),
+});
+```
+  </Accordion>
+  <Accordion title="Complete Custom Provider Schema">
+```typescript
+import {
+  createNotificationSchema,
+  baseRecipientSchema,
+  z,
+} from '@simplens/sdk';
+
+// Custom recipient for a chat platform
+const slackRecipientSchema = baseRecipientSchema.extend({
+  channel_id: z.string(),
+  thread_ts: z.string().optional(),
+});
+
+// Custom content
+const slackContentSchema = z.object({
+  text: z.string(),
+  blocks: z.array(z.unknown()).optional(),
+  attachments: z.array(z.unknown()).optional(),
+});
+
+// Complete schema
+const slackNotificationSchema = createNotificationSchema(
+  'chat',
+  slackRecipientSchema,
+  slackContentSchema
+);
+
+type SlackNotification = z.infer<typeof slackNotificationSchema>;
+```
+  </Accordion>
+</Accordions>
+
+---
+
+## Type Inference
+
+Use Zod's `z.infer<>` to get TypeScript types from your schemas:
+
+```typescript
+import { emailNotificationSchema } from './my-schemas';
+import { z } from '@simplens/sdk';
+
+// Get the type
+type EmailNotification = z.infer<typeof emailNotificationSchema>;
+
+// Now you have full type safety
+function processNotification(notification: EmailNotification) {
+  console.log(notification.recipient.email);  // ✓ Type-safe
+  console.log(notification.content.html);     // ✓ Type-safe
+}
+```

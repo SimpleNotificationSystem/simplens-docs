@@ -9,6 +9,16 @@ import { Card, Cards } from 'fumadocs-ui/components/card';
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 import { Plug, RefreshCw, Shield, Clock, TrendingUp, Radio, TrafficCone, Bell, BarChart, ClipboardList, Target, AlertTriangle, Shuffle, Package} from 'lucide-react';
 
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/core.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/core.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/core/index.mdx"
+  />
+</div>
+
+---
+
 ## What is SimpleNS?
 
 SimpleNS (**Simple Notification System**) solves the notification infrastructure problem by providing a robust, scalable, and extensible foundation for multi-channel notification delivery. Unlike cloud-based notification services that lock you into proprietary APIs and pricing models, SimpleNS runs entirely in your infrastructure, giving you complete control.

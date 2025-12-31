@@ -1,0 +1,314 @@
+---
+title: Manifest Configuration
+description: Configure your provider's metadata and requirements with ProviderManifest.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+## Overview
+
+The `ProviderManifest` is a required readonly property on every provider that contains metadata about your plugin. SimpleNS uses this information to:
+
+- Register your provider in the provider registry
+- Display provider information in the Admin Dashboard
+- Validate required credentials during configuration
+- Route notifications to the correct channel
+
+```typescript
+interface ProviderManifest {
+  name: string;
+  version: string;
+  channel: string;
+  displayName: string;
+  description: string;
+  author: string;
+  homepage?: string;
+  requiredCredentials: string[];
+  optionalConfig?: string[];
+}
+```
+
+---
+
+## Required Fields
+
+### `name`
+
+The unique package identifier for your provider. Should follow npm naming conventions.
+
+```typescript
+name: '@simplens/twilio-sms'      // Scoped package (recommended)
+name: 'simplens-my-email'          // Unscoped package
+```
+
+<Callout type="tip">
+Use scoped packages (`@simplens/` or `@myorg/`) to avoid naming conflicts and clearly identify provider authorship.
+</Callout>
+
+---
+
+### `version`
+
+Semantic version string following [SemVer](https://semver.org/) conventions.
+
+```typescript
+version: '1.0.0'    // Initial release
+version: '1.2.3'    // Major.Minor.Patch
+version: '2.0.0-beta.1'  // Pre-release
+```
+
+---
+
+### `channel`
+
+The notification channel type this provider handles.
+
+| Channel     | Description                          |
+|:------------|:-------------------------------------|
+| `email`     | Email notifications                  |
+| `sms`       | SMS text messages                    |
+| `push`      | Mobile push notifications            |
+| `whatsapp`  | WhatsApp messages                    |
+| `chat`      | Chat platforms (Slack, Discord, etc.)|
+
+```typescript
+channel: 'email'
+channel: 'sms'
+channel: 'push'
+```
+
+<Callout type="warning">
+The `channel` value must match the channel name used in your notification schema (passed to `createNotificationSchema()`).
+</Callout>
+
+---
+
+### `displayName`
+
+Human-readable name shown in the SimpleNS Dashboard and logs.
+
+```typescript
+displayName: 'Twilio SMS'
+displayName: 'SendGrid Email'
+displayName: 'Firebase Cloud Messaging'
+```
+
+---
+
+### `description`
+
+Brief description of the provider's functionality.
+
+```typescript
+description: 'Send SMS notifications via Twilio API'
+description: 'Transactional emails using SendGrid with template support'
+```
+
+---
+
+### `author`
+
+Provider maintainer's name or organization.
+
+```typescript
+author: 'SimpleNS Team'
+author: 'Your Name <email@example.com>'
+author: 'My Company Inc.'
+```
+
+---
+
+### `requiredCredentials`
+
+Array of credential field names that must be provided during initialization. These typically correspond to environment variable names.
+
+```typescript
+requiredCredentials: ['API_KEY']
+requiredCredentials: ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM_NUMBER']
+requiredCredentials: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS']
+```
+
+<Callout type="info">
+These keys are used to access values from `config.credentials` in the `initialize()` method.
+</Callout>
+
+---
+
+## Optional Fields
+
+### `homepage`
+
+URL to documentation or the provider's repository.
+
+```typescript
+homepage: 'https://github.com/simplens/twilio-provider'
+homepage: 'https://docs.mycompany.com/simplens-provider'
+```
+
+---
+
+### `optionalConfig`
+
+Array of optional configuration field names. These are non-essential settings with defaults.
+
+```typescript
+optionalConfig: ['SENDER_NAME', 'REPLY_TO']
+optionalConfig: ['REGION', 'TIMEOUT_MS']
+```
+
+---
+
+## How Optional Config Works
+
+<Callout type="important">
+**Key Rule**: `requiredCredentials` → `config.credentials`, `optionalConfig` → `config.options`
+</Callout>
+
+When you declare `optionalConfig` in your manifest, SimpleNS automatically:
+
+1. **During plugin install**: Adds placeholders to `simplens.config.yaml`
+2. **At startup**: Resolves env vars and passes values to your provider
+
+### Config File Structure
+
+```yaml
+providers:
+  - package: "@simplens/nodemailer-gmail"
+    id: nodemailer-gmail
+    credentials:                    # From requiredCredentials
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+    optionalConfig:                 # From optionalConfig
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_FROM: ${EMAIL_FROM}
+    options:
+      priority: 1
+```
+
+### Resolution Flow
+
+```
+simplens.config.yaml              Your Provider's initialize()
+────────────────────              ─────────────────────────────
+optionalConfig:                   config.options = {
+  EMAIL_HOST: ${EMAIL_HOST}  →      EMAIL_HOST: "smtp.gmail.com",  // if set
+  EMAIL_FROM: ${EMAIL_FROM}  →      EMAIL_FROM: "noreply@x.com",   // if set
+                                    // Missing env vars are omitted
+                                  }
+```
+
+### Accessing in Your Provider
+
+```typescript
+async initialize(config: ProviderConfig): Promise<void> {
+    // Required credentials (always present)
+    const user = config.credentials['EMAIL_USER'];
+    const pass = config.credentials['EMAIL_PASS'];
+    
+    // Optional config (may or may not exist)
+    const host = (config.options?.['EMAIL_HOST'] as string) || 'smtp.gmail.com';
+    const port = parseInt((config.options?.['EMAIL_PORT'] as string) || '587');
+    const from = (config.options?.['EMAIL_FROM'] as string) || user;
+    
+    this.transporter = nodemailer.createTransport({ host, port, auth: { user, pass }});
+    this.fromEmail = from;
+}
+```
+
+<Callout type="tip">
+Always provide sensible defaults when accessing optional config since the key won't exist if the env var wasn't set.
+</Callout>
+
+## Examples by Channel
+
+<Tabs items={['Email', 'SMS', 'Push', 'WhatsApp', 'Chat']}>
+  <Tab value="Email">
+```typescript
+readonly manifest: ProviderManifest = {
+  name: '@simplens/sendgrid',
+  version: '1.0.0',
+  channel: 'email',
+  displayName: 'SendGrid Email',
+  description: 'Transactional emails via SendGrid API',
+  author: 'SimpleNS Team',
+  homepage: 'https://github.com/simplens/sendgrid-provider',
+  requiredCredentials: ['SENDGRID_API_KEY'],
+  optionalConfig: ['SENDER_EMAIL', 'SENDER_NAME'],
+};
+```
+  </Tab>
+  <Tab value="SMS">
+```typescript
+readonly manifest: ProviderManifest = {
+  name: '@simplens/twilio-sms',
+  version: '1.0.0',
+  channel: 'sms',
+  displayName: 'Twilio SMS',
+  description: 'SMS notifications via Twilio',
+  author: 'SimpleNS Team',
+  requiredCredentials: [
+    'TWILIO_ACCOUNT_SID',
+    'TWILIO_AUTH_TOKEN', 
+    'TWILIO_FROM_NUMBER'
+  ],
+};
+```
+  </Tab>
+  <Tab value="Push">
+```typescript
+readonly manifest: ProviderManifest = {
+  name: '@simplens/fcm',
+  version: '1.0.0',
+  channel: 'push',
+  displayName: 'Firebase Cloud Messaging',
+  description: 'Push notifications via FCM',
+  author: 'SimpleNS Team',
+  requiredCredentials: ['FCM_SERVICE_ACCOUNT_JSON'],
+  optionalConfig: ['FCM_PROJECT_ID'],
+};
+```
+  </Tab>
+  <Tab value="WhatsApp">
+```typescript
+readonly manifest: ProviderManifest = {
+  name: '@simplens/twilio-whatsapp',
+  version: '1.0.0',
+  channel: 'whatsapp',
+  displayName: 'Twilio WhatsApp',
+  description: 'WhatsApp messages via Twilio API',
+  author: 'SimpleNS Team',
+  requiredCredentials: [
+    'TWILIO_ACCOUNT_SID',
+    'TWILIO_AUTH_TOKEN',
+    'TWILIO_WHATSAPP_NUMBER'
+  ],
+};
+```
+  </Tab>
+  <Tab value="Chat">
+```typescript
+readonly manifest: ProviderManifest = {
+  name: '@simplens/slack',
+  version: '1.0.0',
+  channel: 'chat',
+  displayName: 'Slack Webhooks',
+  description: 'Send messages to Slack channels via webhooks',
+  author: 'SimpleNS Team',
+  requiredCredentials: ['SLACK_WEBHOOK_URL'],
+  optionalConfig: ['DEFAULT_CHANNEL', 'BOT_USERNAME'],
+};
+```
+  </Tab>
+</Tabs>
+
+---
+
+## Best Practices
+
+1. **Use descriptive names**: Choose `displayName` values that clearly identify the service and channel
+2. **Be specific with credentials**: List exactly what's needed - don't bundle optional items in required
+3. **Follow SemVer**: Properly version your provider to communicate breaking changes
+4. **Include homepage**: Help users find documentation by providing a `homepage` URL
+5. **Match channel to schema**: Ensure the `channel` value matches your `createNotificationSchema()` usage

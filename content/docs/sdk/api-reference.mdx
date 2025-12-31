@@ -1,0 +1,278 @@
+---
+title: API Reference
+description: Complete API reference for @simplens/sdk interfaces, schemas, and utilities.
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+## Overview
+
+This page provides a quick reference for all exports from `@simplens/sdk`.
+
+```typescript
+import {
+  // Interfaces (types only)
+  type SimpleNSProvider,
+  type ProviderManifest,
+  type ProviderConfig,
+  type RateLimitConfig,
+  type DeliveryResult,
+  type BaseNotification,
+  
+  // Schemas
+  baseNotificationSchema,
+  baseRecipientSchema,
+  emailRecipientSchema,
+  smsRecipientSchema,
+  whatsappRecipientSchema,
+  pushRecipientSchema,
+  emailContentSchema,
+  smsContentSchema,
+  whatsappContentSchema,
+  createNotificationSchema,
+  
+  // Utilities
+  replaceVariables,
+  isHtmlContent,
+  truncate,
+  sleep,
+  retryWithBackoff,
+  
+  // Re-exported
+  z,  // Zod
+} from '@simplens/sdk';
+```
+
+---
+
+## Interfaces
+
+### `SimpleNSProvider<T>`
+
+The main contract all providers must implement.
+
+| Member | Type | Description |
+|:-------|:-----|:------------|
+| `manifest` | `ProviderManifest` | Provider metadata (readonly) |
+| `getNotificationSchema()` | `() => z.ZodSchema<T>` | Returns notification validation schema |
+| `getRecipientSchema()` | `() => z.ZodObject` | Returns recipient fields schema |
+| `getContentSchema()` | `() => z.ZodObject` | Returns content fields schema |
+| `getRateLimitConfig()` | `() => RateLimitConfig` | Returns rate limit settings |
+| `initialize(config)` | `(ProviderConfig) => Promise<void>` | Setup credentials |
+| `healthCheck()` | `() => Promise<boolean>` | Verify connectivity |
+| `send(notification)` | `(T) => Promise<DeliveryResult>` | Deliver notification |
+| `shutdown()` | `() => Promise<void>` | Cleanup resources |
+
+[View full documentation →](/docs/sdk-provider-interface)
+
+---
+
+### `ProviderManifest`
+
+Provider metadata for registration and display.
+
+| Field | Type | Required | Description |
+|:------|:-----|:---------|:------------|
+| `name` | `string` | ✅ | Package name (e.g., `@simplens/twilio`) |
+| `version` | `string` | ✅ | Semantic version |
+| `channel` | `string` | ✅ | Channel type: `email`, `sms`, `push`, `whatsapp`, `chat` |
+| `displayName` | `string` | ✅ | Human-readable name |
+| `description` | `string` | ✅ | Provider description |
+| `author` | `string` | ✅ | Maintainer name |
+| `homepage` | `string` | ❌ | Documentation URL |
+| `requiredCredentials` | `string[]` | ✅ | Required credential keys |
+| `optionalConfig` | `string[]` | ❌ | Optional config keys |
+
+[View full documentation →](/docs/sdk-manifest)
+
+---
+
+### `ProviderConfig`
+
+Configuration passed to `initialize()`.
+
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `id` | `string` | Unique provider instance ID |
+| `credentials` | `Record<string, string>` | API keys, tokens |
+| `options` | `Record<string, unknown>?` | Optional settings |
+
+---
+
+### `RateLimitConfig`
+
+Token bucket rate limiting configuration.
+
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `maxTokens` | `number` | Maximum burst capacity |
+| `refillRate` | `number` | Tokens per second |
+
+---
+
+### `DeliveryResult`
+
+Return type from `send()`.
+
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `success` | `boolean` | Whether delivery succeeded |
+| `messageId` | `string?` | Provider's message ID |
+| `providerResponse` | `unknown?` | Raw API response |
+| `error` | `object?` | Error details (if failed) |
+| `error.code` | `string` | Error code |
+| `error.message` | `string` | Human-readable message |
+| `error.retryable` | `boolean` | Whether to retry |
+
+---
+
+### `BaseNotification`
+
+Common fields in all notifications.
+
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `notification_id` | `string` | MongoDB ObjectId |
+| `request_id` | `string` | UUID v4 identifier |
+| `client_id` | `string` | UUID v4 client ID |
+| `channel` | `string` | Channel name |
+| `provider` | `string?` | Provider override |
+| `recipient` | `Record<string, unknown>` | Recipient data |
+| `content` | `Record<string, unknown>` | Message content |
+| `variables` | `Record<string, string>?` | Template variables |
+| `webhook_url` | `string` | Callback URL |
+| `retry_count` | `number` | Current retry count |
+| `created_at` | `Date` | Creation timestamp |
+
+---
+
+## Schemas
+
+### Base Schemas
+
+| Schema | Description |
+|:-------|:------------|
+| `baseNotificationSchema` | Common notification fields |
+| `baseRecipientSchema` | Base recipient with `user_id` |
+
+### Recipient Schemas
+
+| Schema | Extends | Additional Fields |
+|:-------|:--------|:------------------|
+| `emailRecipientSchema` | `baseRecipientSchema` | `email` |
+| `smsRecipientSchema` | `baseRecipientSchema` | `phone` |
+| `whatsappRecipientSchema` | `baseRecipientSchema` | `phone` |
+| `pushRecipientSchema` | `baseRecipientSchema` | `device_token` |
+
+### Content Schemas
+
+| Schema | Fields | Notes |
+|:-------|:-------|:------|
+| `emailContentSchema` | `subject?`, `html?`, `text?` | Requires `html` or `text` |
+| `smsContentSchema` | `message` | Max 1600 characters |
+| `whatsappContentSchema` | `message` | - |
+
+### Schema Factory
+
+```typescript
+createNotificationSchema(channelName, recipientSchema, contentSchema)
+```
+
+Creates a complete notification schema combining base fields with channel-specific schemas.
+
+[View full documentation →](/docs/sdk-schemas)
+
+---
+
+## Utilities
+
+| Function | Signature | Description |
+|:---------|:----------|:------------|
+| `replaceVariables` | `(template: string, variables: Record<string, string>) => string` | Replace `{{var}}` placeholders |
+| `isHtmlContent` | `(content: string) => boolean` | Check for HTML tags |
+| `truncate` | `(str: string, maxLength: number, suffix?: string) => string` | Truncate with suffix |
+| `sleep` | `(ms: number) => Promise<void>` | Async delay |
+| `retryWithBackoff` | `<T>(fn: () => Promise<T>, maxRetries?: number, baseDelayMs?: number) => Promise<T>` | Exponential backoff retry |
+
+[View full documentation →](/docs/sdk-utilities)
+
+---
+
+## Quick Import Examples
+
+<Tabs items={['Email Provider', 'SMS Provider', 'Custom Provider']}>
+  <Tab value="Email Provider">
+```typescript
+import {
+  SimpleNSProvider,
+  ProviderManifest,
+  ProviderConfig,
+  DeliveryResult,
+  RateLimitConfig,
+  createNotificationSchema,
+  emailRecipientSchema,
+  emailContentSchema,
+  replaceVariables,
+  z,
+} from '@simplens/sdk';
+
+const schema = createNotificationSchema('email', emailRecipientSchema, emailContentSchema);
+type EmailNotification = z.infer<typeof schema>;
+
+class EmailProvider implements SimpleNSProvider<EmailNotification> {
+  // ...implementation
+}
+```
+  </Tab>
+  <Tab value="SMS Provider">
+```typescript
+import {
+  SimpleNSProvider,
+  ProviderManifest,
+  DeliveryResult,
+  createNotificationSchema,
+  smsRecipientSchema,
+  smsContentSchema,
+  truncate,
+  z,
+} from '@simplens/sdk';
+
+const schema = createNotificationSchema('sms', smsRecipientSchema, smsContentSchema);
+type SMSNotification = z.infer<typeof schema>;
+
+class SMSProvider implements SimpleNSProvider<SMSNotification> {
+  // ...implementation
+}
+```
+  </Tab>
+  <Tab value="Custom Provider">
+```typescript
+import {
+  SimpleNSProvider,
+  ProviderManifest,
+  DeliveryResult,
+  createNotificationSchema,
+  baseRecipientSchema,
+  z,
+} from '@simplens/sdk';
+
+// Custom recipient
+const myRecipientSchema = baseRecipientSchema.extend({
+  channel_id: z.string(),
+});
+
+// Custom content
+const myContentSchema = z.object({
+  text: z.string(),
+  blocks: z.array(z.unknown()).optional(),
+});
+
+const schema = createNotificationSchema('chat', myRecipientSchema, myContentSchema);
+type MyNotification = z.infer<typeof schema>;
+
+class MyProvider implements SimpleNSProvider<MyNotification> {
+  // ...implementation
+}
+```
+  </Tab>
+</Tabs>

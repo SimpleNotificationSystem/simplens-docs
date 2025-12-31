@@ -1,0 +1,146 @@
+---
+title: Introduction
+description: Get started with @simplens/sdk - Build custom notification providers for SimpleNS.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+
+## What is @simplens/sdk?
+
+The `@simplens/sdk` package is the official toolkit for building custom notification provider plugins for SimpleNS. It provides TypeScript interfaces, Zod schemas, and utility functions that make it easy to integrate new notification channels (email, SMS, push, WhatsApp, chat) into your SimpleNS installation.
+
+<Callout type="info">
+SimpleNS handles rate limiting, retry logic, idempotency, recovery, and status tracking.  
+Your provider only needs to focus on the actual delivery via external APIs.
+</Callout>
+
+---
+
+## Installation
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install @simplens/sdk
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @simplens/sdk
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @simplens/sdk
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Architecture Overview
+
+Understanding the separation of concerns between SimpleNS core and provider plugins is essential:
+
+| **SimpleNS Core Handles**       | **Your Provider Handles**          |
+|:--------------------------------|:-----------------------------------|
+| Rate limiting (token bucket)    | External API authentication        |
+| Retry with exponential backoff  | Message formatting for the API     |
+| Idempotency checks              | Actual delivery via provider SDK   |
+| Recovery and dead-letter queue  | Provider-specific error handling   |
+| Status tracking & webhooks      | Connection pooling (if needed)     |
+
+---
+
+## Quick Start Example
+
+Here's a minimal provider implementation to get you started:
+
+```typescript
+import {
+  SimpleNSProvider,
+  ProviderManifest,
+  DeliveryResult,
+  ProviderConfig,
+  RateLimitConfig,
+  createNotificationSchema,
+  emailRecipientSchema,
+  emailContentSchema,
+  z
+} from '@simplens/sdk';
+
+// 1. Create the notification schema
+const notificationSchema = createNotificationSchema(
+  'email',
+  emailRecipientSchema,
+  emailContentSchema
+);
+
+type MyNotification = z.infer<typeof notificationSchema>;
+
+// 2. Implement the provider
+class MyEmailProvider implements SimpleNSProvider<MyNotification> {
+  private apiKey: string = '';
+
+  readonly manifest: ProviderManifest = {
+    name: '@myorg/simplens-my-email',
+    version: '1.0.0',
+    channel: 'email',
+    displayName: 'My Email Provider',
+    description: 'Send emails via My Email Service',
+    author: 'Your Name',
+    requiredCredentials: ['API_KEY'],
+  };
+
+  getNotificationSchema() { return notificationSchema; }
+  getRecipientSchema() { return emailRecipientSchema; }
+  getContentSchema() { return emailContentSchema; }
+
+  getRateLimitConfig(): RateLimitConfig {
+    return { maxTokens: 100, refillRate: 10 };
+  }
+
+  async initialize(config: ProviderConfig): Promise<void> {
+    this.apiKey = config.credentials['API_KEY'];
+  }
+
+  async healthCheck(): Promise<boolean> {
+    return !!this.apiKey;
+  }
+
+  async send(notification: MyNotification): Promise<DeliveryResult> {
+    try {
+      // Your delivery logic here
+      return { success: true, messageId: 'msg-123' };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          code: 'SEND_FAILED',
+          message: error instanceof Error ? error.message : 'Unknown error',
+          retryable: true,
+        },
+      };
+    }
+  }
+
+  async shutdown(): Promise<void> {
+    // Cleanup resources
+  }
+}
+
+export default MyEmailProvider;
+```
+
+---
+
+## What's Included
+
+| Category | Exports |
+|:---------|:--------|
+| **Interfaces** | `SimpleNSProvider`, `ProviderManifest`, `ProviderConfig`, `RateLimitConfig`, `DeliveryResult`, `BaseNotification` |
+| **Schemas** | `baseNotificationSchema`, `emailRecipientSchema`, `smsRecipientSchema`, `whatsappRecipientSchema`, `pushRecipientSchema`, `emailContentSchema`, `smsContentSchema`, `whatsappContentSchema`, `createNotificationSchema` |
+| **Utilities** | `replaceVariables`, `isHtmlContent`, `truncate`, `sleep`, `retryWithBackoff` |
+| **Re-exports** | `z` (Zod) |

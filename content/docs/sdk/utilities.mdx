@@ -1,0 +1,370 @@
+---
+title: Utilities
+description: Helper functions for template processing, retries, and common operations.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+## Overview
+
+The SDK provides utility functions to help with common tasks when building notification providers:
+
+```typescript
+import {
+  replaceVariables,
+  isHtmlContent,
+  truncate,
+  sleep,
+  retryWithBackoff,
+} from '@simplens/sdk';
+```
+
+---
+
+## Template Processing
+
+### `replaceVariables(template, variables)`
+
+Substitutes `{{variable_name}}` placeholders in a string with values from the variables object. Supports optional whitespace inside braces.
+
+```typescript
+function replaceVariables(
+  template: string,
+  variables: Record<string, string>
+): string
+```
+
+**Parameters**:
+| Parameter   | Type                      | Description                |
+|:------------|:--------------------------|:---------------------------|
+| `template`  | `string`                  | String with placeholders   |
+| `variables` | `Record<string, string>`  | Key-value pairs            |
+
+**Returns**: String with placeholders replaced.
+
+<Tabs items={['Basic Usage', 'With Whitespace', 'In Provider']}>
+  <Tab value="Basic Usage">
+```typescript
+import { replaceVariables } from '@simplens/sdk';
+
+const result = replaceVariables(
+  'Hello {{name}}, your order #{{order_id}} is ready!',
+  { name: 'Alice', order_id: '12345' }
+);
+// Result: "Hello Alice, your order #12345 is ready!"
+```
+  </Tab>
+  <Tab value="With Whitespace">
+```typescript
+// Handles whitespace inside braces
+const result = replaceVariables(
+  'Hi {{ name }}, welcome to {{  platform  }}!',
+  { name: 'Bob', platform: 'SimpleNS' }
+);
+// Result: "Hi Bob, welcome to SimpleNS!"
+```
+  </Tab>
+  <Tab value="In Provider">
+```typescript
+async send(notification: MyNotification): Promise<DeliveryResult> {
+  let html = notification.content.html || '';
+  
+  // Apply variable substitution if variables provided
+  if (notification.variables) {
+    html = replaceVariables(html, notification.variables);
+  }
+  
+  // Send the processed content
+  await this.client.send({ html });
+  return { success: true };
+}
+```
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+Variables that don't exist in the variables object are left unchanged in the template. This prevents accidental data loss if some variables are missing.
+</Callout>
+
+---
+
+### `isHtmlContent(content)`
+
+Checks if a string contains HTML tags. Useful for determining whether to send HTML or plain text.
+
+```typescript
+function isHtmlContent(content: string): boolean
+```
+
+**Parameters**:
+| Parameter | Type     | Description        |
+|:----------|:---------|:-------------------|
+| `content` | `string` | Content to check   |
+
+**Returns**: `true` if the content appears to contain HTML tags.
+
+**Examples**:
+```typescript
+import { isHtmlContent } from '@simplens/sdk';
+
+isHtmlContent('<p>Hello</p>');           // true
+isHtmlContent('<div class="test">Hi</div>'); // true
+isHtmlContent('Hello, World!');          // false
+isHtmlContent('Use <angle> brackets');   // true (has tag-like syntax)
+```
+
+**Use Case**:
+```typescript
+async send(notification: MyNotification): Promise<DeliveryResult> {
+  const content = notification.content.text || '';
+  
+  // Decide format based on content
+  const format = isHtmlContent(content) ? 'html' : 'text';
+  
+  await this.api.send({
+    body: content,
+    contentType: format === 'html' ? 'text/html' : 'text/plain',
+  });
+  
+  return { success: true };
+}
+```
+
+---
+
+## String Manipulation
+
+### `truncate(str, maxLength, suffix)`
+
+Truncates a string to a maximum length, adding a suffix if truncated.
+
+```typescript
+function truncate(
+  str: string,
+  maxLength: number,
+  suffix: string = '...'
+): string
+```
+
+**Parameters**:
+| Parameter   | Type     | Default  | Description                    |
+|:------------|:---------|:---------|:-------------------------------|
+| `str`       | `string` | -        | String to truncate             |
+| `maxLength` | `number` | -        | Maximum total length           |
+| `suffix`    | `string` | `'...'`  | Suffix added when truncated    |
+
+**Returns**: Truncated string with suffix (if needed).
+
+**Examples**:
+```typescript
+import { truncate } from '@simplens/sdk';
+
+truncate('Hello, World!', 20);        // "Hello, World!" (no change)
+truncate('Hello, World!', 10);        // "Hello, ..." (7 chars + 3 for "...")
+truncate('Hello, World!', 10, '…');   // "Hello, Wo…" (9 chars + 1 for "…")
+```
+
+**Use Case** - SMS Character Limits:
+```typescript
+async send(notification: SMSNotification): Promise<DeliveryResult> {
+  // Ensure message fits in single SMS
+  const message = truncate(notification.content.message, 160);
+  
+  await this.client.messages.create({
+    body: message,
+    to: notification.recipient.phone,
+  });
+  
+  return { success: true };
+}
+```
+
+---
+
+## Async Helpers
+
+### `sleep(ms)`
+
+Returns a Promise that resolves after the specified milliseconds. Useful for implementing delays between retries.
+
+```typescript
+function sleep(ms: number): Promise<void>
+```
+
+**Parameters**:
+| Parameter | Type     | Description              |
+|:----------|:---------|:-------------------------|
+| `ms`      | `number` | Milliseconds to wait     |
+
+**Example**:
+```typescript
+import { sleep } from '@simplens/sdk';
+
+async function sendWithDelay() {
+  console.log('Sending first message...');
+  await sendMessage();
+  
+  await sleep(1000); // Wait 1 second
+  
+  console.log('Sending second message...');
+  await sendMessage();
+}
+```
+
+---
+
+### `retryWithBackoff(fn, maxRetries, baseDelayMs)`
+
+Retries an async function with exponential backoff. The delay doubles after each failed attempt.
+
+```typescript
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelayMs: number = 1000
+): Promise<T>
+```
+
+**Parameters**:
+| Parameter     | Type              | Default | Description                    |
+|:--------------|:------------------|:--------|:-------------------------------|
+| `fn`          | `() => Promise<T>`| -       | Async function to retry        |
+| `maxRetries`  | `number`          | `3`     | Maximum retry attempts         |
+| `baseDelayMs` | `number`          | `1000`  | Initial delay (doubles each retry) |
+
+**Returns**: Result of successful function call.
+
+**Throws**: Last error if all retries fail.
+
+**Backoff Schedule** (with defaults):
+| Attempt | Delay Before  |
+|:--------|:--------------|
+| 1       | 0ms (immediate) |
+| 2       | 1000ms        |
+| 3       | 2000ms        |
+| 4       | 4000ms        |
+
+<Tabs items={['Basic Usage', 'Custom Retries', 'In Provider']}>
+  <Tab value="Basic Usage">
+```typescript
+import { retryWithBackoff } from '@simplens/sdk';
+
+const result = await retryWithBackoff(
+  () => fetch('https://api.example.com/data').then(r => r.json())
+);
+```
+  </Tab>
+  <Tab value="Custom Retries">
+```typescript
+// 5 retries with 500ms base delay
+const result = await retryWithBackoff(
+  () => unstableApiCall(),
+  5,      // maxRetries
+  500     // baseDelayMs
+);
+// Delays: 0, 500, 1000, 2000, 4000ms
+```
+  </Tab>
+  <Tab value="In Provider">
+```typescript
+async send(notification: MyNotification): Promise<DeliveryResult> {
+  try {
+    const response = await retryWithBackoff(
+      async () => {
+        const res = await this.client.send({
+          to: notification.recipient.email,
+          html: notification.content.html,
+        });
+        
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status}`);
+        }
+        
+        return res.json();
+      },
+      3,    // 3 retries
+      1000  // 1 second base delay
+    );
+    
+    return {
+      success: true,
+      messageId: response.id,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        code: 'SEND_FAILED',
+        message: error.message,
+        retryable: false, // Already retried
+      },
+    };
+  }
+}
+```
+  </Tab>
+</Tabs>
+
+<Callout type="tip">
+Use `retryWithBackoff` for transient errors within your provider. SimpleNS also has its own retry mechanism, so don't retry indefinitely - let SimpleNS handle long-term retries.
+</Callout>
+
+---
+
+## Usage in Providers
+
+Here's how these utilities work together in a real provider:
+
+```typescript
+import {
+  SimpleNSProvider,
+  DeliveryResult,
+  replaceVariables,
+  isHtmlContent,
+  truncate,
+  retryWithBackoff,
+} from '@simplens/sdk';
+
+class MyEmailProvider implements SimpleNSProvider<MyNotification> {
+  async send(notification: MyNotification): Promise<DeliveryResult> {
+    try {
+      let body = notification.content.html || notification.content.text || '';
+      
+      // 1. Apply template variables
+      if (notification.variables) {
+        body = replaceVariables(body, notification.variables);
+      }
+      
+      // 2. Detect content type
+      const contentType = isHtmlContent(body) ? 'text/html' : 'text/plain';
+      
+      // 3. Truncate subject for safety
+      const subject = truncate(notification.content.subject || '', 100);
+      
+      // 4. Send with retries for transient failures
+      const result = await retryWithBackoff(
+        () => this.api.sendEmail({
+          to: notification.recipient.email,
+          subject,
+          body,
+          contentType,
+        }),
+        2,    // 2 retries
+        500   // 500ms base delay
+      );
+      
+      return { success: true, messageId: result.id };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          code: 'SEND_FAILED',
+          message: error.message,
+          retryable: true,
+        },
+      };
+    }
+  }
+}
+```
