@@ -245,7 +245,7 @@ export const MultiChannelSection = () => {
                         className="bg-blue-600 hover:bg-blue-700 px-6 py-5 text-base font-medium rounded-xl"
                         asChild
                     >
-                        <Link href="/docs/plugins">
+                        <Link href="/docs/plugins#official-plugins">
                             Browse Plugins
                         </Link>
                     </Button>

@@ -1,0 +1,131 @@
+---
+title: Mock Plugin
+description: A testing utility plugin for SimpleNS development and integration testing.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/plugins/official-plugins/mock.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/plugins/official-plugins/mock.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/plugins/official-plugins/mock.mdx"
+  />
+</div>
+
+---
+
+## What is Mock Plugin
+
+The `@simplens/mock` plugin is a lightweight, zero-dependency provider designed specifically for **testing and development** within the SimpleNS ecosystem. It simulates notification delivery without actually sending anything.
+
+## How It Works
+
+This plugin simulates notification delivery by logging to the console. When a notification is sent:
+
+1. The plugin receives the notification payload
+2. Validates the `recipient.user_id` and `content.message` fields
+3. Logs the notification details to the console
+4. Returns `{ success: true }` immediately
+
+<Callout type="info">
+  No API keys, SMTP servers, or third-party services required. Perfect for CI/CD pipelines and local development.
+</Callout>
+
+---
+
+## Installation
+
+```bash
+npm run plugin:install @simplens/mock
+```
+<Callout type="info">
+See the [Plugin Installation Guide](./index.mdx#installation) for installing plugins in your simplens-core
+</Callout>
+
+---
+
+## Configuration
+
+Add the plugin to your `simplens.config.yaml` if you used `Config-first` method from [Plugin Installation Guide](./index.mdx#installation):
+
+```yaml title="simplens.config.yaml"
+providers:
+  - package: "@simplens/mock"
+    id: mock
+    credentials: {}
+    options:
+      priority: 1
+      rateLimit:
+        maxTokens: 100
+        refillRate: 10
+
+channels:
+  mock:
+    default: "mock"
+```
+
+### Required Credentials
+
+| Key | Description |
+|-----|-------------|
+| *(none)* | No credentials required! |
+
+<Callout type="info">
+  **No credentials required!** The mock plugin works out of the box with zero configuration.
+</Callout>
+
+### Rate Limit
+
+| Key          | Default | Description                              |
+|--------------|---------|------------------------------------------|
+| `maxTokens`  | `100`   | Max tokens in bucket                     |
+| `refillRate` | `10`    | Tokens refilled per second               |
+
+---
+
+## Environment Variables
+
+```bash title=".env"
+# No environment variables required for mock plugin
+```
+
+---
+
+## Notification Payload
+
+- You can easily get and configure this request payload from `Payload Studio` in [Admin Dashboard](../core/admin-dashboard#payload-studio)
+
+```json
+{
+  "request_id": "uuid-v4",
+  "client_id": "uuid-v4",
+  "channel": "mock",
+  "recipient": {
+    "user_id": "user-123"
+  },
+  "content": {
+    "message": "Hello {{name}}, welcome to SimpleNS!"
+  },
+  "variables": {
+    "name": "John"
+  }
+}
+```
+
+---
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Zero Dependencies** | No API keys or external services required |
+| **Instant Response** | No network latency or rate limiting |
+| **Safe Testing** | No real notifications sent |
+| **CI/CD Ready** | Perfect for automated test suites |
+| **Always Healthy** | `healthCheck()` always returns `true` |
+| **Template Variables** | Supports `{{key}}` syntax |

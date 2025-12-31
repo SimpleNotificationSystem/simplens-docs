@@ -1,0 +1,256 @@
+---
+title: Introduction
+description: List of Official Plugins for SimpleNS
+---
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Box, FileCode, RefreshCw, Gauge, Plug, ArrowLeftRight, Scale, CheckCircle, LayoutDashboard, Mail, FlaskConical, Wrench, BookOpen } from 'lucide-react';
+
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/plugins.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/plugins.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/plugins/index.mdx"
+  />
+</div>
+
+
+## Plugins in SimpleNS
+
+SimpleNS uses a **plugin-based architecture** that allows you to extend its capabilities by adding new notification providers without modifying the core system.
+
+<Callout type="info" title="Why Plugins?">
+  Plugins keep the core lean while enabling unlimited extensibility. Add only the providers you need, exactly how you need them configured.
+</Callout>
+
+---
+
+## What are Plugins?
+
+Plugins are **self-contained npm packages** that implement the `SimpleNSProvider` interface from `@simplens/sdk`. Each plugin:
+
+<Cards>
+  <Card title={<><Box className="inline w-5 h-5 mr-2" />Encapsulates Logic</>}>
+    Contains all the code needed to send notifications via a specific service (e.g., Gmail, Twilio, FCM)
+  </Card>
+  <Card title={<><FileCode className="inline w-5 h-5 mr-2" />Defines Schemas</>}>
+    Provides Zod schemas for recipient and content validation specific to the channel
+  </Card>
+  <Card title={<><RefreshCw className="inline w-5 h-5 mr-2" />Manages Lifecycle</>}>
+    Handles initialization, health checks, and graceful shutdown
+  </Card>
+  <Card title={<><Gauge className="inline w-5 h-5 mr-2" />Configures Rate Limits</>}>
+    Specifies rate limiting behavior to prevent API throttling
+  </Card>
+</Cards>
+
+---
+
+## Role of Plugins
+
+Plugins serve several critical functions within the SimpleNS ecosystem:
+
+<Accordions>
+  <Accordion title={<><Plug className="inline w-5 h-5 mr-2" />Provider Abstraction</>}>
+    Plugins abstract the complexity of different notification services behind a unified interface. Whether you're sending emails via Gmail, SendGrid, or SES, the core system interacts with all providers identically.
+  </Accordion>
+  
+  <Accordion title={<><ArrowLeftRight className="inline w-5 h-5 mr-2" />Hot-Swappable Providers</>}>
+    Add, remove, or update providers without touching your application code. Just update `simplens.config.yaml` and restart.
+  </Accordion>
+  
+  <Accordion title={<><Scale className="inline w-5 h-5 mr-2" />Fallback & Priority</>}>
+    Configure multiple providers for the same channel with priorities. If your primary provider fails, SimpleNS automatically falls back to the next available provider.
+  </Accordion>
+  
+  <Accordion title={<><CheckCircle className="inline w-5 h-5 mr-2" />Schema Validation</>}>
+    Each plugin defines strict schemas for recipients and content. This ensures notifications are validated before hitting the queue, catching errors early.
+  </Accordion>
+  
+  <Accordion title={<><LayoutDashboard className="inline w-5 h-5 mr-2" />Dynamic Dashboard Integration</>}>
+    Plugins expose their schemas to the admin dashboard, enabling dynamic form generation for testing notifications.
+  </Accordion>
+</Accordions>
+
+---
+
+## Plugin Lifecycle
+
+Every plugin follows a consistent lifecycle managed by the SimpleNS core:
+
+<Steps>
+  <Step>
+    ### Installation
+    Plugins can be installed in two ways:
+    
+    <Tabs items={['CLI-first', 'Config-first']}>
+      <Tab value="Config-first">
+        **Auto-install on startup**
+        
+        Add the plugin to `simplens.config.yaml` with credentials. SimpleNS automatically installs it to `.plugins/` on startup if not already present.
+        
+        ```yaml title="simplens.config.yaml"
+        providers:
+          - package: "@simplens/nodemailer-gmail"
+            id: "gmail"
+            credentials:
+              EMAIL: ${GMAIL_EMAIL}
+              APP_PASSWORD: ${GMAIL_APP_PASSWORD}
+        ```
+      </Tab>
+      <Tab value="CLI-first">
+        **Auto-configure from manifest**
+        
+        Run the install command. This installs the plugin to `.plugins/` and auto-generates the configuration entry in `simplens.config.yaml` using the plugin's manifest data.
+        
+        ```bash
+        npm run plugin:install @simplens/nodemailer-gmail
+        ```
+        
+        You'll still need to set the required environment variables listed in `credentials` field in `simplens.config.yaml`file. You can also set env variables for `optionalConfig` also.
+      </Tab>
+    </Tabs>
+  </Step>
+  
+  <Step>
+    ### Initialization
+    The plugin's `initialize()` method is called with resolved credentials and optional configuration from environment variables.
+  </Step>
+  
+  <Step>
+    ### Health Check
+    SimpleNS verifies the plugin is ready by calling `healthCheck()`. Unhealthy plugins are flagged but don't block other providers.
+  </Step>
+  
+  <Step>
+    ### Registration
+    The plugin is registered in the Plugin Registry with its configured priority and channel mapping.
+  </Step>
+  
+  <Step>
+    ### Message Handling
+    When notifications arrive, the plugin's `send()` method is invoked to deliver them via the underlying service.
+  </Step>
+  
+  <Step>
+    ### Shutdown
+    On graceful termination, `shutdown()` is called to clean up connections and resources.
+  </Step>
+</Steps>
+
+---
+
+## Official Plugins
+
+SimpleNS provides official, production-ready plugins maintained by the core team:
+
+<Cards>
+  <Card 
+    title={<><Mail className="inline w-5 h-5 mr-2" />Nodemailer Gmail</>}
+    href="/docs/plugins/official-plugins/nodemailer-gmail"
+  >
+    **`@simplens/nodemailer-gmail`**
+    
+    Send emails using Gmail's SMTP service via Nodemailer.
+  </Card>
+  
+  <Card 
+    title={<><FlaskConical className="inline w-5 h-5 mr-2" />Mock Provider</>}
+    href="/docs/plugins/official-plugins/mock"
+  >
+    **`@simplens/mock`**
+    
+    A testing plugin that simulates notification delivery. Perfect for development and E2E testing.
+  </Card>
+</Cards>
+
+---
+
+## Configuration Example
+
+Plugins are configured in your `simplens.config.yaml`:
+
+<Tabs items={['Basic Setup', 'With Fallback']}>
+  <Tab value="Basic Setup">
+    ```yaml title="simplens.config.yaml"
+    providers:
+      - package: "@simplens/nodemailer-gmail"
+        id: "gmail-primary"
+        credentials:
+          EMAIL_USER: ${EMAIL_USER}
+          EMAIL_PASS: ${EMAIL_PASS}
+        options:
+          priority: 10
+          rateLimit:
+            maxTokens: 100
+            refillRate: 50
+
+    channels:
+      email:
+        default: "gmail-primary"
+    ```
+  </Tab>
+  
+  <Tab value="With Fallback">
+    ```yaml title="simplens.config.yaml"
+    providers:
+      - package: "@simplens/nodemailer-gmail"
+        id: "gmail-primary"
+        credentials:
+          EMAIL: ${GMAIL_EMAIL}
+          APP_PASSWORD: ${GMAIL_APP_PASSWORD}
+        options:
+          priority: 10
+
+      - package: "<fallback_provider_npm_package_name>"
+        id: "email-fallback"
+        credentials: {}
+        options:
+          priority: 1
+
+    channels:
+      email:
+        default: "gmail-primary"
+        fallback: "email-fallback"
+    ```
+  </Tab>
+</Tabs>
+
+<Callout type="tip" title="Environment Variables">
+  Use `${VAR_NAME}` syntax in credentials to reference environment variables. SimpleNS resolves these at runtime, keeping secrets out of config files.
+</Callout>
+
+---
+
+## Installing Plugins
+
+Plugins are **auto-installed** when you start SimpleNS with a configured `simplens.config.yaml`. However, you can also install them manually:
+
+```bash title="Manual Installation"
+npm run plugin:install @simplens/nodemailer-gmail
+```
+
+Plugins are installed to the `.plugins/node_modules/` directory, keeping them separate from your core dependencies.
+
+---
+
+## What's Next?
+
+<Cards>
+  <Card 
+    title={<><Wrench className="inline w-5 h-5 mr-2" />Build Your Own Plugin</>}
+    href="/docs/sdk/building-plugin"
+  >
+    Learn how to create a custom SimpleNS plugin using `@simplens/sdk`
+  </Card>
+  
+  <Card 
+    title={<><BookOpen className="inline w-5 h-5 mr-2" />SDK Reference</>}
+    href="/docs/sdk"
+  >
+    Explore the full SDK documentation including interfaces, schemas, and utilities
+  </Card>
+</Cards>
