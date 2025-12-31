@@ -3,8 +3,8 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "./ui/button"
-import { Github, Menu, X, ChevronDown, ChevronRight } from "lucide-react"
-import { useState } from "react"
+import { Github, Menu, X, ChevronDown, ChevronRight, Star } from "lucide-react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface NavGroup {
@@ -21,6 +21,18 @@ export const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [openDropdown, setOpenDropdown] = useState<string | null>(null)
     const [openMobileAccordion, setOpenMobileAccordion] = useState<string | null>(null)
+    const [starCount, setStarCount] = useState<number | null>(null)
+
+    useEffect(() => {
+        fetch('https://api.github.com/repos/SimpleNotificationSystem/simplens-core')
+            .then(res => res.json())
+            .then(data => {
+                if (data.stargazers_count !== undefined) {
+                    setStarCount(data.stargazers_count)
+                }
+            })
+            .catch(() => setStarCount(null))
+    }, [])
 
     const navGroups: NavGroup[] = [
         {
@@ -73,8 +85,8 @@ export const Header = () => {
                             >
                                 <button
                                     className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${openDropdown === group.label
-                                            ? "text-white bg-white/5"
-                                            : "text-zinc-400 hover:text-white"
+                                        ? "text-white bg-white/5"
+                                        : "text-zinc-400 hover:text-white"
                                         }`}
                                 >
                                     {group.label}
@@ -122,15 +134,20 @@ export const Header = () => {
                         <Link
                             href="https://github.com/SimpleNotificationSystem/simplens-core"
                             target="_blank"
-                            className="flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:text-white transition-colors rounded-lg border border-zinc-700 hover:border-zinc-500 bg-zinc-900/50"
                         >
-                            <Github className="h-5 w-5" />
+                            <Github className="h-4 w-4" />
+                            <span>Star</span>
+                            {starCount !== null && (
+                                <>
+                                    <span className="h-4 w-px bg-zinc-700" />
+                                    <span className="flex items-center gap-1">
+                                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                                        {starCount >= 1000 ? `${(starCount / 1000).toFixed(1)}k` : starCount}
+                                    </span>
+                                </>
+                            )}
                         </Link>
-
-                        <div className="h-4 w-px bg-white/10" />
-                        <Button className="bg-white text-black hover:bg-zinc-200">
-                            Get Started
-                        </Button>
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -218,11 +235,14 @@ export const Header = () => {
                                     className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-zinc-700 text-zinc-300 hover:border-white hover:text-white transition-colors"
                                 >
                                     <Github className="h-5 w-5" />
-                                    View on GitHub
+                                    <span>Star on GitHub</span>
+                                    {starCount !== null && (
+                                        <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-800 text-sm">
+                                            <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                                            {starCount >= 1000 ? `${(starCount / 1000).toFixed(1)}k` : starCount}
+                                        </span>
+                                    )}
                                 </Link>
-                                <Button className="w-full bg-white text-black hover:bg-zinc-200 py-3">
-                                    Get Started
-                                </Button>
                             </div>
                         </div>
                     </motion.div>
