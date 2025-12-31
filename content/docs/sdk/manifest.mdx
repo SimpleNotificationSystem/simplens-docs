@@ -6,6 +6,16 @@ description: Configure your provider's metadata and requirements with ProviderMa
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/sdk/manifest.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/sdk/manifest.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/sdk/manifest.mdx"
+  />
+</div>
+
+---
+
 ## Overview
 
 The `ProviderManifest` is a required readonly property on every provider that contains metadata about your plugin. SimpleNS uses this information to:

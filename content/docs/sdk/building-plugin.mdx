@@ -9,6 +9,16 @@ import { Callout } from 'fumadocs-ui/components/callout';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 import { File, Folder, Files } from 'fumadocs-ui/components/files';
 
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/sdk/buliding-plugin.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/sdk/building-plugin.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/sdk/building-plugin.mdx"
+  />
+</div>
+
+---
+
 The `@simplens/create-simplens-plugin` CLI tool generates all required boilerplate for building SimpleNS notification plugins, so you can focus on writing the delivery logic.
 
 ## Quick Start

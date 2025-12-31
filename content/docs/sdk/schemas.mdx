@@ -7,6 +7,16 @@ import { Callout } from 'fumadocs-ui/components/callout';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/sdk/schemas.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/sdk/schemas.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/sdk/schemas.mdx"
+  />
+</div>
+
+---
+
 ## Overview
 
 The SDK provides pre-built [Zod](https://zod.dev) schemas that you can use directly or extend for your custom provider. Zod is re-exported from the SDK, so you don't need to install it separately.

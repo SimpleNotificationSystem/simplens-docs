@@ -7,6 +7,16 @@ import { Callout } from 'fumadocs-ui/components/callout';
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/sdk/plugin-interface.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/sdk/plugin-interface.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/sdk/plugin-interface.mdx"
+  />
+</div>
+
+---
+
 ## Overview
 
 The `SimpleNSProvider<T>` interface is the core contract that all notification providers must implement. This interface ensures SimpleNS can uniformly handle rate limiting, validation, and delivery across all provider types.
