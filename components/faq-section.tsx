@@ -148,7 +148,7 @@ export const FAQSection = () => {
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-4">
                         <Link
-                            href="/docs"
+                            href="/docs/core"
                             className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-blue-500 hover:text-white"
                         >
                             <BookOpen className="h-4 w-4" />

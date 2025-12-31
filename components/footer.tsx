@@ -15,7 +15,7 @@ export const Footer = () => {
             { label: "Dashboard", href: "#dashboard" },
         ],
         resources: [
-            { label: "Documentation", href: "/docs" },
+            { label: "Documentation", href: "/docs/core" },
             { label: "FAQ", href: "#faq" },
             { label: "GitHub", href: "https://github.com/SimpleNotificationSystem/simplens-core" },
         ],

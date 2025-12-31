@@ -85,7 +85,7 @@ export const HeroSection = () => {
                                 className="text-white hover:text-white hover:bg-white/10 px-6 py-5 sm:px-8 sm:py-6 text-base sm:text-lg font-medium rounded-xl transition-all duration-200 group"
                                 asChild
                             >
-                                <Link href="/docs">
+                                <Link href="/docs/core">
                                     Get started
                                     <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                                 </Link>

@@ -254,7 +254,7 @@ export const MultiChannelSection = () => {
                         className="border-zinc-700 hover:bg-[#e8e8e8] px-6 py-5 text-base font-medium rounded-xl"
                         asChild
                     >
-                        <Link href="/docs/sdk">
+                        <Link href="/docs/sdk/building-plugin">
                             Build a Plugin
                         </Link>
                     </Button>
