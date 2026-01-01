@@ -26,6 +26,15 @@ import { Target, Plug, TrendingUp, Shield, Leaf, MessageSquare, Database, BarCha
 
 SimpleNS follows an event-driven, microservices-inspired architecture where each component has a specific responsibility. The system is built around the **outbox pattern** for reliability and uses **Kafka** for event streaming.
 
+<Callout type="info" title="Deployment Architecture">
+SimpleNS uses **split Docker Compose files** for flexible deployment:
+- `docker-compose.yaml` - Application services (uses pre-built images from GHCR)
+- `docker-compose.infra.yaml` - Infrastructure services (MongoDB, Kafka, Redis, Loki)
+- `docker-compose.dev.yaml` - All-in-one development environment
+
+See the [Self-Hosting Guide](/docs/core/self-hosting) for deployment options.
+</Callout>
+
 ### Core Principles
 
 <Cards>

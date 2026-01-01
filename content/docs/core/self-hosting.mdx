@@ -1,0 +1,306 @@
+---
+title: Self-Hosting Guide
+description: Deploy SimpleNS to production with flexible infrastructure hosting options.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/core/self-hosting.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/core/self-hosting.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/core/self-hosting.mdx"
+  />
+</div>
+
+---
+
+## Overview
+
+SimpleNS uses a split architecture that separates **application services** from **infrastructure services**, allowing flexible deployment across single or distributed systems.
+
+| Compose File | Purpose | When to Use |
+|:---|:---|:---|
+| `docker-compose.yaml` | Application services (API, processors, dashboard) | Always required |
+| `docker-compose.infra.yaml` | Infrastructure (MongoDB, Kafka, Redis, Loki, Grafana) | Only if self-hosting infrastructure |
+| `docker-compose.dev.yaml` | All-in-one development setup | Local development only |
+
+---
+
+## Quick Start
+
+<Steps>
+
+### Create Project Directory
+
+```bash
+mkdir my-simplens && cd my-simplens
+```
+
+### Download Required Files
+
+Download these files from the [simplens-core repository](https://github.com/SimpleNotificationSystem/simplens-core):
+
+- `.env.example` → rename to `.env`
+- `docker-compose.yaml`
+- `docker-compose.infra.yaml` (if self-hosting infrastructure)
+
+### Configure Environment
+
+```bash
+# Generate secrets
+openssl rand -base64 32  # Copy to NS_API_KEY
+openssl rand -base64 32  # Copy to AUTH_SECRET
+```
+
+Edit `.env` with your configuration (see [Configuration Reference](./configuration)).
+
+### Generate Plugin Configuration
+
+```bash
+# For testing
+npx @simplens/config-gen generate @simplens/mock
+
+# For production email
+npx @simplens/config-gen generate @simplens/nodemailer-gmail
+```
+
+### Start Services
+
+```bash
+# Start infrastructure (if self-hosting)
+docker-compose -f docker-compose.infra.yaml up -d
+
+# Wait for infrastructure to be healthy (~30-60 seconds)
+docker-compose -f docker-compose.infra.yaml ps
+
+# Pull latest simplens-core and simplens-dashboard image from ghcr.io
+docker-compose pull
+
+# Start application services
+docker-compose up -d
+```
+
+### Verify Installation
+
+```bash
+# API Health
+curl http://localhost:3000/health
+
+# Check all services
+docker-compose ps
+```
+
+</Steps>
+
+---
+
+## Deployment Scenarios
+
+<Tabs items={['Single Machine', 'Distributed', 'Cloud Infrastructure']}>
+  <Tab value="Single Machine">
+    **All services on one machine using self-hosted infrastructure.**
+    
+    ```bash title=".env"
+    # Leave INFRA_HOST unset (uses host.docker.internal)
+    MONGO_URI=mongodb://host.docker.internal:27017/simplens?replicaSet=rs0
+    BROKERS=host.docker.internal:9092
+    REDIS_URL=redis://host.docker.internal:6379
+    LOKI_URL=http://host.docker.internal:3100
+    ```
+    
+    ```bash
+    # Start both compose files
+    docker-compose -f docker-compose.infra.yaml up -d
+    docker-compose up -d
+    ```
+  </Tab>
+  
+  <Tab value="Distributed">
+    **Infrastructure and applications on separate machines.**
+    
+    **On Infrastructure Host (e.g., 192.168.1.100):**
+    
+    ```bash title=".env on infrastructure machine"
+    INFRA_HOST=192.168.1.100
+    ```
+    
+    ```bash
+    docker-compose -f docker-compose.infra.yaml up -d
+    ```
+    
+    **On Application Host:**
+    
+    ```bash title=".env on application machine"
+    MONGO_URI=mongodb://192.168.1.100:27017/simplens?replicaSet=rs0
+    BROKERS=192.168.1.100:9092
+    REDIS_URL=redis://192.168.1.100:6379
+    LOKI_URL=http://192.168.1.100:3100
+    ```
+    
+    ```bash
+    docker-compose up -d
+    ```
+    
+    <Callout type="warn">
+    Ensure firewall rules allow traffic on ports 27017, 9092, 6379, and 3100 between hosts.
+    </Callout>
+  </Tab>
+  
+  <Tab value="Cloud Infrastructure">
+    **Use managed cloud services instead of self-hosting.**
+    
+    ```bash title=".env"
+    # MongoDB Atlas
+    MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/simplens?retryWrites=true
+    
+    # Confluent Cloud Kafka
+    BROKERS=kafka-broker.cloud-provider.com:9092
+    
+    # Redis Cloud
+    REDIS_URL=redis://user:pass@redis.cloud-provider.com:6379
+    
+    # Grafana Cloud Loki (or skip)
+    LOKI_URL=http://loki.cloud-provider.com:3100
+    ```
+    
+    ```bash
+    # Only start application services
+    docker-compose up -d
+    ```
+    
+    <Callout type="info">
+    When using cloud infrastructure, you don't need `docker-compose.infra.yaml` at all.
+    </Callout>
+  </Tab>
+</Tabs>
+
+---
+
+## Application Services
+
+The `docker-compose.yaml` uses pre-built images from GitHub Container Registry:
+
+| Service | Image | Description |
+|:---|:---|:---|
+| `api` | `ghcr.io/simplenotificationsystem/simplens-core:latest` | REST API for notification ingestion |
+| `worker` | `ghcr.io/simplenotificationsystem/simplens-core:latest` | Background worker for outbox processing |
+| `notification_processor` | `ghcr.io/simplenotificationsystem/simplens-core:latest` | Plugin-based notification delivery |
+| `delayed_processor` | `ghcr.io/simplenotificationsystem/simplens-core:latest` | Scheduled notification handling |
+| `recovery` | `ghcr.io/simplenotificationsystem/simplens-core:latest` | Detects and rescues stuck notifications |
+| `dashboard` | `ghcr.io/simplenotificationsystem/simplens-dashboard:latest` | Admin dashboard (Next.js) |
+
+<Callout type="info">
+All application services share a `plugin-data` volume for plugins and mount `simplens.config.yaml` as read-only.
+</Callout>
+
+---
+
+## Infrastructure Services
+
+The `docker-compose.infra.yaml` provides self-hosted infrastructure:
+
+| Service | Image | Description |
+|:---|:---|:---|
+| `mongo` | `mongo:7.0` | MongoDB with replica set |
+| `kafka` | `apache/kafka-native` | Kafka with KRaft mode (no Zookeeper) |
+| `kafka-ui` | `kafbat/kafka-ui:main` | Kafka monitoring UI (optional) |
+| `redis` | `redis:7-alpine` | Redis for caching and queues |
+| `loki` | `grafana/loki:2.9.0` | Log aggregation |
+| `grafana` | `grafana/grafana:10.2.0` | Log visualization |
+
+---
+
+## Port Reference
+
+| Service | Port | Description |
+|:---|:---|:---|
+| API | 3000 | REST API for notification ingestion |
+| Dashboard | 3002 | Admin web interface |
+| MongoDB | 27017 | Database |
+| Kafka | 9092 | Message broker |
+| Kafka UI | 8080 | Kafka monitoring (optional) |
+| Redis | 6379 | Cache and queues |
+| Loki | 3100 | Log aggregation |
+| Grafana | 3001 | Log visualization |
+
+---
+
+## Config Generator CLI
+
+The `@simplens/config-gen` CLI generates `simplens.config.yaml` from plugin manifests.
+
+### Commands
+
+```bash
+# Generate config for single plugin
+npx @simplens/config-gen generate @simplens/mock
+
+# Generate config for multiple plugins
+npx @simplens/config-gen gen @simplens/nodemailer-gmail @simplens/mock
+
+# Add plugin to existing config
+npx @simplens/config-gen gen @simplens/nodemailer-gmail -c simplens.config.yaml
+
+# Custom output path
+npx @simplens/config-gen gen @simplens/mock -o custom.yaml
+
+# Print to stdout
+npx @simplens/config-gen gen @simplens/mock --stdout
+
+# List official plugins
+npx @simplens/config-gen list --official
+
+# List community plugins
+npx @simplens/config-gen list --community
+```
+
+---
+
+## Security Considerations
+
+<Callout type="warn" title="Before Deploying to Production">
+Complete these security checks before going live.
+</Callout>
+
+1. ✅ Generate strong `NS_API_KEY` and `AUTH_SECRET` values
+2. ✅ Set a secure `ADMIN_PASSWORD`
+3. ✅ Configure firewall rules to restrict infrastructure ports
+4. ✅ Set up SSL/TLS for API and dashboard
+5. ✅ Configure MongoDB authentication
+6. ✅ Set up backup strategy for MongoDB
+7. ✅ Review and limit exposed ports
+
+---
+
+## Troubleshooting
+
+### Services can't connect to infrastructure
+
+- **INFRA_HOST**: Ensure it matches the infrastructure machine's accessible IP
+- **Firewall**: Check ports 27017, 9092, 6379, 3100 are open
+- **Network**: Verify machines can ping each other
+
+### MongoDB replica set issues
+
+```bash
+# Reset and reinitialize
+docker-compose -f docker-compose.infra.yaml down -v
+docker-compose -f docker-compose.infra.yaml up -d
+# Wait 60 seconds for auto-initialization
+```
+
+### Plugin configuration not loading
+
+```bash
+# Verify config file exists
+ls -la simplens.config.yaml
+
+# Regenerate if needed
+npx @simplens/config-gen generate @simplens/mock --stdout
+
+# Set required environment variables in .env
+```

@@ -73,7 +73,7 @@ The main contract all providers must implement.
 | `send(notification)` | `(T) => Promise<DeliveryResult>` | Deliver notification |
 | `shutdown()` | `() => Promise<void>` | Cleanup resources |
 
-[View full documentation →](/docs/sdk-provider-interface)
+[View full documentation →](/docs/sdk/plugin-interface)
 
 ---
 
@@ -93,7 +93,7 @@ Provider metadata for registration and display.
 | `requiredCredentials` | `string[]` | ✅ | Required credential keys |
 | `optionalConfig` | `string[]` | ❌ | Optional config keys |
 
-[View full documentation →](/docs/sdk-manifest)
+[View full documentation →](/docs/sdk/manifest)
 
 ---
 
@@ -190,7 +190,7 @@ createNotificationSchema(channelName, recipientSchema, contentSchema)
 
 Creates a complete notification schema combining base fields with channel-specific schemas.
 
-[View full documentation →](/docs/sdk-schemas)
+[View full documentation →](/docs/sdk/schemas)
 
 ---
 
@@ -204,7 +204,7 @@ Creates a complete notification schema combining base fields with channel-specif
 | `sleep` | `(ms: number) => Promise<void>` | Async delay |
 | `retryWithBackoff` | `<T>(fn: () => Promise<T>, maxRetries?: number, baseDelayMs?: number) => Promise<T>` | Exponential backoff retry |
 
-[View full documentation →](/docs/sdk-utilities)
+[View full documentation →](/docs/sdk/utilities)
 
 ---
 

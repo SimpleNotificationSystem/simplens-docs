@@ -104,3 +104,34 @@ Set `LOG_LEVEL=debug` in your `.env` file and restart services.
 | `[INFO] Notification ... delivered` | Success |
 | `[WARN] ... failed, retrying` | Transient failure, will retry |
 | `[ERROR] ... Invalid credentials` | Config error, requires manual fix |
+
+---
+
+## Distributed Deployment Issues
+
+<Accordions>
+  <Accordion title="Services can't connect to infrastructure">
+    **Applications running but can't reach MongoDB, Kafka, or Redis.**
+    
+    1. **Check INFRA_HOST**: If infrastructure runs on a separate machine, ensure connection URLs use the correct IP.
+    2. **Firewall**: Verify ports 27017, 9092, 6379, 3100 are open on infrastructure host.
+    3. **Network**: Confirm machines can reach each other: `ping 192.168.1.100`
+  </Accordion>
+
+  <Accordion title="Config Generator CLI errors">
+    **`npx @simplens/config-gen` fails or produces incorrect output.**
+    
+    - **Network**: CLI needs internet access to fetch plugin manifests from registry.
+    - **Node version**: Requires Node.js 18+.
+    - **Regenerate**: Try `npx @simplens/config-gen generate @simplens/mock --stdout` to verify output.
+  </Accordion>
+
+  <Accordion title="Plugin auto-install fails on startup">
+    **SimpleNS starts but plugins don't load.**
+    
+    1. **Verify config**: Check `simplens.config.yaml` exists and is valid YAML.
+    2. **Check logs**: `docker compose logs notification_processor`
+    3. **Permissions**: Ensure `.plugins/` directory is writable.
+    4. **Network**: Container needs npm registry access for first-time install.
+  </Accordion>
+</Accordions>

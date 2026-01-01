@@ -23,10 +23,9 @@ import { BarChart, BookOpen, Clock, Bell, Radio, Server, TrendingUp, MessageSqua
 
 Before you begin, ensure you have the following installed:
 
-- **Docker** and **Docker Compose** (for running infrastructure services)
-- **Node.js** 18+ (for local development)
-- **OpenSSL** (for generating API keys and secrets)
-- Basic understanding of REST APIs
+- **Docker** and **Docker Compose**
+- **Node.js** 18+ (for config generation)
+- **OpenSSL** (for generating secrets)
 
 ---
 
@@ -64,43 +63,30 @@ AUTH_SECRET=<generated-auth-secret>
 ADMIN_PASSWORD=<strong-password>
 ```
 
-### Install Dependencies
+### Generate Plugin Configuration
+
+Use the config generator to create `simplens.config.yaml`:
 
 ```bash
-npm install
+# For testing (mock provider)
+npx @simplens/config-gen generate @simplens/mock
 ```
 
-### Install a Plugin
-
-Install the Gmail plugin for email notifications:
+Add the partition config to `.env`:
 
 ```bash
-npm run plugin:install @simplens/nodemailer-gmail
+MOCK_PARTITION=1
 ```
 
-<Callout type="info">
-This automatically creates `simplens.config.yaml` with the plugin configuration.
+<Callout type="tip">
+For email notifications, use `npx @simplens/config-gen generate @simplens/nodemailer-gmail` and configure your Gmail credentials.
 </Callout>
 
-**Configure Gmail credentials** in `.env`:
+### Start Services
 
 ```bash
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-```
-
-<Callout type="tip" title="Getting Gmail App Password">
-1. Enable 2FA on your Google Account
-2. Go to Google Account → Security → 2-Step Verification
-3. Scroll to "App passwords"
-4. Generate new app password and copy it to `EMAIL_PASS`
-</Callout>
-
-### Start Infrastructure Services
-
-```bash
-docker-compose build
-docker-compose up -d
+# Start all services (development mode)
+docker compose -f docker-compose.dev.yaml up -d
 ```
 
 This starts:
@@ -119,7 +105,7 @@ This starts:
 **Wait for services to be healthy** (about 30-60 seconds):
 
 ```bash
-docker-compose ps
+docker compose -f docker-compose.dev.yaml ps
 ```
 
 ### Verify Installation
@@ -149,7 +135,7 @@ Expected response:
        - Username: `admin`
        - Password: `<your-password-from-env>`
     3. Navigate to **Send**
-    4. Select channel: `email`
+    4. Select channel: `mock`
     5. Fill in the required (*) fields
     6. Click "Send Notification"
   </Tab>
@@ -162,15 +148,13 @@ Expected response:
       -d '{
         "request_id": "550e8400-e29b-41d4-a716-446655440000",
         "client_id": "55283667-1f58-467d-86a1-47f7f0e059f2",
-        "channel": ["email"],
+        "channel": ["mock"],
         "recipient": {
-          "user_id": "user123",
-          "email": "test@example.com"
+          "user_id": "user123"
         },
         "content": {
-          "email": {
-            "subject": "Hello from SimpleNS!",
-            "message": "<h1>Welcome!</h1><p>Your notification system is working.</p>"
+          "mock": {
+            "message": "Hello from SimpleNS!"
           }
         }
       }'
@@ -183,8 +167,8 @@ Expected response:
     }
     ```
 
-    <Callout >
-    As each provider's recipient and content schemas can vary, you can get the schema from Payload Studio section in the admin dashboard. See the [Admin Dasboard Guide](./admin-dashboard)
+    <Callout>
+    As each provider's recipient and content schemas can vary, you can get the schema from Payload Studio section in the admin dashboard. See the [Admin Dashboard Guide](./admin-dashboard)
     </Callout>
   </Tab>
 </Tabs>
@@ -194,7 +178,7 @@ Expected response:
 View your notification in the dashboard:
 
 1. Go to **Events** page
-2. Search for your notification by ID or email
+2. Search for your notification by ID
 3. Check status: `pending` → `processing` → `delivered`
 
 </Steps>
@@ -207,14 +191,14 @@ View your notification in the dashboard:
 You've successfully sent your first notification through SimpleNS.
 </Callout>
 
-### Install More Plugins
+### Add More Plugins
 
 ```bash
-# For testing (mock provider)
-npm run plugin:install @simplens/mock
+# Add Gmail email provider
+npx @simplens/config-gen generate @simplens/nodemailer-gmail -c simplens.config.yaml
 
-# List installed plugins
-npm run plugin:list
+# List available plugins
+npx @simplens/config-gen list --official
 ```
 
 ### Build Your Own Plugin
@@ -235,7 +219,7 @@ See [Plugin Development Guide](../sdk/building-plugin) for details.
 
 **Check logs:**
 ```bash
-docker-compose logs <service-name>
+docker compose -f docker-compose.dev.yaml logs <service-name>
 ```
 
 <Callout type="warn" title="Common issues">
@@ -247,16 +231,16 @@ docker-compose logs <service-name>
 ### Notification stuck in pending
 
 **Possible causes:**
-- Worker not running: `docker-compose ps worker`
-- Processor not running: `docker-compose ps notification-processor`
+- Worker not running: `docker compose -f docker-compose.dev.yaml ps worker`
+- Processor not running: `docker compose -f docker-compose.dev.yaml ps notification_processor`
 - Kafka connection issues: Check Kafka UI at http://localhost:8080
 
 ### Plugin not loading
 
 **Check:**
-1. Plugin installed: `npm run plugin:list`
-2. Credentials in `.env` match `simplens.config.yaml`
-3. Restart processor: `docker-compose restart notification-processor`
+1. Config exists: `cat simplens.config.yaml`
+2. Environment variables set in `.env`
+3. Restart processor: `docker compose -f docker-compose.dev.yaml restart notification_processor`
 
 <Callout type="info">
 For more issues, see [Troubleshooting Guide](./troubleshooting).
@@ -269,37 +253,26 @@ For more issues, see [Troubleshooting Guide](./troubleshooting).
 Once running, you can access:
 
 <Cards>
-  <Card title={<><Server className="inline w-5 h-5 mr-2" /> API Server</>}>
+  <Card title={<><Server className="inline w-5 h-5 mr-2" />API Server</>}>
     Notification API - Port 3000
   </Card>
-  <Card title={<><BarChart className="inline w-5 h-5 mr-2" /> Admin Dashboard</>}>
+  <Card title={<><BarChart className="inline w-5 h-5 mr-2" />Admin Dashboard</>}>
     Monitoring & management - Port 3002
   </Card>
-  <Card title={<><TrendingUp className="inline w-5 h-5 mr-2" /> Grafana</>}>
+  <Card title={<><TrendingUp className="inline w-5 h-5 mr-2" />Grafana</>}>
     Log visualization - Port 3001
   </Card>
-  <Card title={<><MessageSquare className="inline w-5 h-5 mr-2" /> Kafka UI</>}>
+  <Card title={<><MessageSquare className="inline w-5 h-5 mr-2" />Kafka UI</>}>
     Kafka topic monitoring - Port 8080
   </Card>
 </Cards>
 
 ---
 
-## Development Mode
+## Production Deployment
 
-For local development without Docker:
-
-```bash
-# Start infrastructure only
-docker-compose up -d mongo kafka redis loki
-
-# Run services locally
-npm run dev              # API server
-npm run worker:dev       # Background worker
-npm run processor:dev    # Notification processor
-npm run delayed-processor:dev   # Delayed processor
-npm run recovery:dev     # Recovery service
-
-# Dashboard (in separate terminal)
-cd dashboard && npm run dev
-```
+For production environments, see the [Self-Hosting Guide](./self-hosting) which covers:
+- Split Docker Compose files for flexibility
+- Distributed deployments across multiple hosts
+- Cloud infrastructure integration
+- Security hardening

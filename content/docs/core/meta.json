@@ -3,7 +3,7 @@
   "pages": [
     "index",
     "getting-started",
-    "installation",
+    "self-hosting",
     "architecture",
     "core-concepts",
     "api-reference",

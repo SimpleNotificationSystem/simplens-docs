@@ -84,35 +84,24 @@ Every plugin follows a consistent lifecycle managed by the SimpleNS core:
 <Steps>
   <Step>
     ### Installation
-    Plugins can be installed in two ways:
+    Use the `@simplens/config-gen` CLI to generate plugin configuration:
     
-    <Tabs items={['CLI-first', 'Config-first']}>
-      <Tab value="Config-first">
-        **Auto-install on startup**
-        
-        Add the plugin to `simplens.config.yaml` with credentials. SimpleNS automatically installs it to `.plugins/` on startup if not already present.
-        
-        ```yaml title="simplens.config.yaml"
-        providers:
-          - package: "@simplens/nodemailer-gmail"
-            id: "gmail"
-            credentials:
-              EMAIL: ${GMAIL_EMAIL}
-              APP_PASSWORD: ${GMAIL_APP_PASSWORD}
-        ```
-      </Tab>
-      <Tab value="CLI-first">
-        **Auto-configure from manifest**
-        
-        Run the install command. This installs the plugin to `.plugins/` and auto-generates the configuration entry in `simplens.config.yaml` using the plugin's manifest data.
-        
-        ```bash
-        npm run plugin:install @simplens/nodemailer-gmail
-        ```
-        
-        You'll still need to set the required environment variables listed in `credentials` field in `simplens.config.yaml`file. You can also set env variables for `optionalConfig` also.
-      </Tab>
-    </Tabs>
+    ```bash
+    # Generate config for a plugin
+    npx @simplens/config-gen generate @simplens/nodemailer-gmail
+    
+    # Add to existing config
+    npx @simplens/config-gen gen @simplens/mock -c simplens.config.yaml
+    
+    # List available plugins
+    npx @simplens/config-gen list --official
+    ```
+    
+    This creates `simplens.config.yaml` with the plugin configuration. You'll need to set the required environment variables in `.env`.
+    
+    <Callout type="info">
+    SimpleNS automatically installs plugins to `.plugins/` on startup based on your `simplens.config.yaml`.
+    </Callout>
   </Step>
   
   <Step>
@@ -227,10 +216,21 @@ Plugins are configured in your `simplens.config.yaml`:
 
 ## Installing Plugins
 
-Plugins are **auto-installed** when you start SimpleNS with a configured `simplens.config.yaml`. However, you can also install them manually:
+Plugins are **auto-installed** when you start SimpleNS with a configured `simplens.config.yaml`.
 
-```bash title="Manual Installation"
-npm run plugin:install @simplens/nodemailer-gmail
+### Using Config Generator CLI
+
+```bash
+# Generate config for single or multiple plugins
+npx @simplens/config-gen generate @simplens/nodemailer-gmail
+npx @simplens/config-gen gen @simplens/mock @simplens/nodemailer-gmail
+
+# Add to existing config
+npx @simplens/config-gen gen @simplens/nodemailer-gmail -c simplens.config.yaml
+
+# List available plugins
+npx @simplens/config-gen list --official
+npx @simplens/config-gen list --community
 ```
 
 Plugins are installed to the `.plugins/node_modules/` directory, keeping them separate from your core dependencies.
