@@ -205,8 +205,8 @@ export const MultiChannelSection = () => {
                     <CodeBlock title="Quick Start" icon={<Terminal className="h-4 w-4" />} delay={0.1}>
                         <span className="text-zinc-500"># Scaffold a new plugin</span>{"\n"}
                         <span className="text-green-400">npx</span> @simplens/create-simplens-plugin{"\n\n"}
-                        <span className="text-zinc-500"># Install and configure</span>{"\n"}
-                        <span className="text-green-400">npm</span> run plugin:install @your/plugin
+                        <span className="text-zinc-500"># Generate config file</span>{"\n"}
+                        <span className="text-green-400">npx</span> @simplens/config-gen gen @simplens/nodemailer-gmail
                     </CodeBlock>
 
                     <CodeBlock title="Simple Code" icon={<Code2 className="h-4 w-4" />} delay={0.2}>
