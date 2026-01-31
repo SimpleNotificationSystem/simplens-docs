@@ -18,6 +18,54 @@ import { Card, Cards } from 'fumadocs-ui/components/card';
 
 ---
 
+## Quick Install
+
+Get started with a single command:
+
+<Tabs items={['Linux', 'Windows', 'npm']}>
+  <Tab value="Linux">
+    ```bash
+    curl -fsSL https://simplens.vercel.app/api/install/linux | bash
+    ```
+    
+    <Callout type="info">
+    Works on Ubuntu, Debian, CentOS, and other Linux distros. Requires `curl` and `bash`.
+    </Callout>
+  </Tab>
+  
+  <Tab value="Windows">
+    ```powershell
+    irm https://simplens.vercel.app/api/install/windows | iex
+    ```
+    
+    <Callout type="warn">
+    Run PowerShell as Administrator. Requires PowerShell 5.1 or later.
+    </Callout>
+  </Tab>
+  
+  <Tab value="npm">
+    ```bash
+    # Quick start with npx
+    npx @simplens/onboard
+    
+    # Or install globally
+    npm i -g @simplens/onboard
+    ```
+    
+    <Callout type="info">
+    Requires Node.js 18+ and npm installed.
+    </Callout>
+  </Tab>
+</Tabs>
+
+The installer will:
+1. Download the required Docker Compose files
+2. Generate secure API keys and secrets
+3. Create a starter plugin configuration
+4. Start the infrastructure and application services
+
+---
+
 ## Overview
 
 SimpleNS uses a split architecture that separates **application services** from **infrastructure services**, allowing flexible deployment across single or distributed systems.
