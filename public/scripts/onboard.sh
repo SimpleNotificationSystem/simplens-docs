@@ -15,6 +15,25 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 BOLD='\033[1m'
 
+# ============================================
+# TTY Handling for curl | bash usage
+# ============================================
+# When piped via curl, stdin is the script content, not the terminal.
+# Redirect stdin from /dev/tty to enable interactive prompts.
+if [[ ! -t 0 ]]; then
+    if [[ -r /dev/tty && -w /dev/tty ]]; then
+        exec < /dev/tty
+    else
+        echo -e "${RED}Error: This script requires an interactive terminal.${NC}"
+        echo ""
+        echo "Please download and run manually:"
+        echo "  curl -fsSL https://simplens.vercel.app/api/install/linux -o onboard.sh"
+        echo "  chmod +x onboard.sh"
+        echo "  ./onboard.sh"
+        exit 1
+    fi
+fi
+
 # Default selections (1=selected, 0=not selected)
 declare -A INFRA_SELECTED=(
     ["mongo"]=0
