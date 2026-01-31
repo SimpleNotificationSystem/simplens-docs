@@ -19,10 +19,12 @@ BOLD='\033[1m'
 # TTY Handling for curl | bash usage
 # ============================================
 # When piped via curl, stdin is the script content, not the terminal.
-# Redirect stdin from /dev/tty to enable interactive prompts.
+# We defer TTY redirect until after the script is fully parsed.
+# The actual redirect happens in the main function.
+NEED_TTY_REDIRECT=0
 if [[ ! -t 0 ]]; then
     if [[ -r /dev/tty && -w /dev/tty ]]; then
-        exec < /dev/tty
+        NEED_TTY_REDIRECT=1
     else
         echo -e "${RED}Error: This script requires an interactive terminal.${NC}"
         echo ""
@@ -717,6 +719,11 @@ display_service_status() {
 # Main
 # ============================================
 main() {
+    # Deferred TTY redirect - now safe because script is fully parsed
+    if [[ $NEED_TTY_REDIRECT -eq 1 ]]; then
+        exec < /dev/tty
+    fi
+
     display_banner
     
     # Create target directory if needed
