@@ -10,8 +10,7 @@ export async function GET() {
         return new NextResponse(scriptContent, {
             status: 200,
             headers: {
-                'Content-Type': 'text/x-shellscript',
-                'Content-Disposition': 'attachment; filename="onboard.sh"',
+                'Content-Type': 'text/plain; charset=utf-8',
                 'Cache-Control': 'public, max-age=3600',
             },
         });
