@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Get SimpleNS up and running in 5 minutes. This guide will walk you through setting up a local instance and sending your first notification.
+description: Get SimpleNS up and running in under a minute. This guide will walk you through setting up a local instance and sending your first notification.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
@@ -24,93 +24,68 @@ import { BarChart, BookOpen, Clock, Bell, Radio, Server, TrendingUp, MessageSqua
 Before you begin, ensure you have the following installed:
 
 - **Docker** and **Docker Compose**
-- **Node.js** 18+ (for config generation)
-- **OpenSSL** (for generating secrets)
 
 ---
 
 ## Quick Start
 
+Get SimpleNS running on your machine (local or remote) in under a minute with a single command.
+
+<Tabs items={['Linux', 'Windows', 'npm']}>
+  <Tab value="Linux">
+    Run this command in your terminal:
+
+    ```bash
+    curl -fsSL https://simplens.vercel.app/api/install/linux | bash
+    ```
+
+    <Callout type="info">
+    Works on Ubuntu, Debian, CentOS, and other Linux distros.
+    </Callout>
+  </Tab>
+  
+  <Tab value="Windows">
+    Run this command in PowerShell (as Administrator):
+
+    ```powershell
+    irm https://simplens.vercel.app/api/install/windows | iex
+    ```
+
+    <Callout type="info">
+    Requires PowerShell 5.1+ running as Administrator.
+    </Callout>
+  </Tab>
+  
+  <Tab value="npm">
+    Quick start with npx:
+
+    ```bash
+    npx @simplens/onboard
+    ```
+
+    Or install globally:
+
+    ```bash
+    npm i -g @simplens/onboard
+    ```
+
+    <Callout type="info">
+    Requires Node.js 18+ and npm installed.
+    </Callout>
+  </Tab>
+</Tabs>
+
+The installer will automatically:
+- Pull the required Docker images
+- Configure your environment
+- Set up the plugin configuration
+- Start all SimpleNS services
+
 <Steps>
-
-### Clone the Repository
-
-```bash
-git clone https://github.com/SimpleNotificationSystem/simplens-core.git
-cd simplens-core
-```
-
-### Configure Environment
-
-Copy the example environment file and generate secrets:
-
-```bash
-# Copy environment template
-cp .env.example .env
-
-# Generate API key
-openssl rand -base64 32  # Copy this to NS_API_KEY in .env
-
-# Generate auth secret
-openssl rand -base64 32  # Copy this to AUTH_SECRET in .env
-```
-
-Edit `.env` and set at minimum:
-
-```bash
-NS_API_KEY=<generated-api-key>
-AUTH_SECRET=<generated-auth-secret>
-ADMIN_PASSWORD=<strong-password>
-```
-
-### Generate Plugin Configuration
-
-Use the config generator to create `simplens.config.yaml`:
-
-```bash
-# For testing (mock provider)
-npx @simplens/config-gen generate @simplens/mock
-```
-
-Add the partition config to `.env`:
-
-```bash
-MOCK_PARTITION=1
-```
-
-<Callout type="tip">
-For email notifications, use `npx @simplens/config-gen generate @simplens/nodemailer-gmail` and configure your Gmail credentials.
-</Callout>
-
-### Start Services
-
-```bash
-# Start all services (development mode)
-docker compose -f docker-compose.dev.yaml up -d
-```
-
-This starts:
-- MongoDB (database)
-- Kafka (message queue)
-- Redis (caching & delay queue)
-- Loki (log aggregation)
-- Grafana (log visualization)
-- API Server
-- Background Worker
-- Notification Processor
-- Delayed Processor
-- Recovery Service
-- Admin Dashboard
-
-**Wait for services to be healthy** (about 30-60 seconds):
-
-```bash
-docker compose -f docker-compose.dev.yaml ps
-```
 
 ### Verify Installation
 
-Check that the API server is running:
+Once the installation completes, check that the API server is running:
 
 ```bash
 curl http://localhost:3000/health
@@ -135,7 +110,7 @@ Expected response:
        - Username: `admin`
        - Password: `<your-password-from-env>`
     3. Navigate to **Send**
-    4. Select channel: `mock`
+    4. Select channel: Select available channel and provider (channels and providers can be configured in `simplens.config.yaml` file)
     5. Fill in the required (*) fields
     6. Click "Send Notification"
   </Tab>

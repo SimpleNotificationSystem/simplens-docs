@@ -1,0 +1,383 @@
+---
+title: Local Development
+description: Set up a complete SimpleNS development environment using VS Code Dev Containers. This guide covers the pre-configured devcontainer setup for streamlined local development.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Code, Container, Database, Layers, Terminal, Zap, Box, Server } from 'lucide-react';
+
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/core/local-development.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/core/local-development.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/core/local-development.mdx"
+  />
+</div>
+
+---
+
+## Overview
+
+SimpleNS includes a pre-configured **Dev Container** setup that provides a complete development environment with all required tools, extensions, and infrastructure services. This allows you to start contributing or customizing SimpleNS without manual environment setup.
+
+<Callout type="info">
+Dev Containers work with VS Code and GitHub Codespaces. The configuration automatically sets up Node.js, Docker-in-Docker, and all required VS Code extensions.
+</Callout>
+
+---
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Docker Desktop** (Windows/Mac) or **Docker Engine** (Linux)
+- **VS Code** with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+- **Git** for cloning the repository
+
+<Callout type="note">
+Alternatively, you can use **GitHub Codespaces** which requires no local setup—just a GitHub account.
+</Callout>
+
+---
+
+## Getting Started
+
+<Steps>
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/SimpleNotificationSystem/simplens-core.git
+cd simplens-core
+```
+
+### Open in Dev Container
+
+<Tabs items={['VS Code', 'GitHub Codespaces']}>
+  <Tab value="VS Code">
+    1. Open the cloned folder in VS Code
+    2. When prompted, click **"Reopen in Container"**
+    
+    Or manually:
+    1. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
+    2. Type "Dev Containers: Reopen in Container"
+    3. Press Enter
+
+    <Callout>
+    The first build may take a few minutes while Docker pulls the base image and installs dependencies.
+    </Callout>
+  </Tab>
+  
+  <Tab value="GitHub Codespaces">
+    1. Navigate to the repository on GitHub
+    2. Click the green **"Code"** button
+    3. Select **"Codespaces"** tab
+    4. Click **"Create codespace on main"**
+
+    <Callout type="info">
+    GitHub Codespaces provides a cloud-hosted development environment with the same configuration.
+    </Callout>
+  </Tab>
+</Tabs>
+
+### Wait for Setup
+
+The Dev Container automatically runs post-creation commands:
+
+```bash
+# Automatically executed on container creation:
+npm install && cd dashboard && npm install
+```
+
+Once complete, infrastructure services start automatically:
+
+```bash
+# Automatically executed on container start:
+docker compose -f docker-compose.infra.yaml up -d
+```
+
+### Verify Environment
+
+After the container is ready, verify the setup:
+
+```bash
+# Check Node.js
+node --version  # Should show Node.js 18+
+
+# Check Docker-in-Docker
+docker ps  # Should list running infrastructure containers
+
+# Verify infrastructure services
+docker compose -f docker-compose.infra.yaml ps
+```
+
+</Steps>
+
+---
+
+## Dev Container Configuration
+
+The `.devcontainer/devcontainer.json` configures the development environment:
+
+### Base Image
+
+```json
+{
+  "name": "SimpleNS Devcontainer",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node"
+}
+```
+
+Uses Microsoft's TypeScript/Node.js development container image which includes:
+- Node.js LTS
+- TypeScript
+- Common development utilities
+
+### Docker-in-Docker
+
+```json
+{
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    }
+  }
+}
+```
+
+<Callout type="info" title="Why Docker-in-Docker?">
+This allows you to run Docker commands inside the container to manage infrastructure services (MongoDB, Kafka, Redis) and test Docker-based deployments.
+</Callout>
+
+### VS Code Extensions
+
+The following extensions are automatically installed:
+
+<Cards>
+  <Card title={<><Code className="inline w-5 h-5 mr-2" />Prettier</>}>
+    Code formatting - `esbenp.prettier-vscode`
+  </Card>
+  <Card title={<><Terminal className="inline w-5 h-5 mr-2" />ESLint</>}>
+    Linting - `dbaeumer.vscode-eslint`
+  </Card>
+  <Card title={<><Layers className="inline w-5 h-5 mr-2" />Tailwind CSS</>}>
+    IntelliSense - `bradlc.vscode-tailwindcss`
+  </Card>
+  <Card title={<><Container className="inline w-5 h-5 mr-2" />Docker</>}>
+    Container management - `ms-azuretools.vscode-docker`
+  </Card>
+  <Card title={<><Zap className="inline w-5 h-5 mr-2" />Vitest</>}>
+    Test explorer - `vitest.explorer`
+  </Card>
+  <Card title={<><Database className="inline w-5 h-5 mr-2" />MongoDB</>}>
+    Database tools - `mongodb.mongodb-vscode`
+  </Card>
+</Cards>
+
+### Environment Variables
+
+```json
+{
+  "remoteEnv": {
+    "NODE_ENV": "development",
+    "INFRA_HOST": "localhost"
+  }
+}
+```
+
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `NODE_ENV` | `development` | Enables development mode features |
+| `INFRA_HOST` | `localhost` | Infrastructure services hostname |
+
+---
+
+## Infrastructure Services
+
+The Dev Container automatically starts infrastructure services via `docker-compose.infra.yaml`:
+
+<Cards>
+  <Card title={<><Database className="inline w-5 h-5 mr-2" />MongoDB</>}>
+    Document database with replica set - Port 27017
+  </Card>
+  <Card title={<><Box className="inline w-5 h-5 mr-2" />Apache Kafka</>}>
+    Message broker (KRaft mode) - Port 9092
+  </Card>
+  <Card title={<><Server className="inline w-5 h-5 mr-2" />Kafka UI</>}>
+    Topic monitoring interface - Port 8080
+  </Card>
+  <Card title={<><Zap className="inline w-5 h-5 mr-2" />Redis</>}>
+    In-memory cache & queues - Port 6379
+  </Card>
+  <Card title={<><Layers className="inline w-5 h-5 mr-2" />Loki</>}>
+    Log aggregation - Port 3100
+  </Card>
+  <Card title={<><Layers className="inline w-5 h-5 mr-2" />Grafana</>}>
+    Log visualization - Port 3001
+  </Card>
+</Cards>
+
+### Managing Infrastructure
+
+```bash
+# View running services
+docker compose -f docker-compose.infra.yaml ps
+
+# View logs
+docker compose -f docker-compose.infra.yaml logs -f
+
+# Stop services
+docker compose -f docker-compose.infra.yaml down
+
+# Restart services
+docker compose -f docker-compose.infra.yaml restart
+```
+
+---
+
+## Running the Application
+
+Once the Dev Container is ready, start the application services:
+
+<Steps>
+
+### Configure Environment
+
+```bash
+# Copy example environment file
+cp .env.example .env
+
+# Edit the .env file with your settings
+```
+
+<Callout type="warn">
+Make sure to update the required environment variables like `NS_API_KEY` and `ADMIN_PASSWORD`.
+</Callout>
+
+### Generate Plugin Configuration
+
+```bash
+# Generate config for mock plugin (for testing)
+npx @simplens/config-gen generate @simplens/mock
+```
+
+### Start Application Services
+
+<Tabs items={['Development', 'Full Stack']}>
+  <Tab value="Development">
+    Start in development mode with hot reload. Each service runs in a separate terminal:
+
+    ```bash
+    # Terminal 1: API Server
+    npm run dev
+
+    # Terminal 2: Background Worker (status updates processing)
+    npm run worker:dev
+
+    # Terminal 3: Notification Processor (plugin-based delivery)
+    npm run processor:dev
+
+    # Terminal 4: Delayed Processor (scheduled notifications)
+    npm run delayed-processor:dev
+
+    # Terminal 5: Recovery Service (stuck notification detection)
+    npm run recovery:dev
+    ```
+
+    ```bash
+    # Terminal 6: Dashboard (in dashboard directory)
+    cd dashboard && npm run dev
+    ```
+
+    <Callout type="tip">
+    Use VS Code's split terminal feature or terminal tabs to manage multiple processes.
+    </Callout>
+  </Tab>
+  
+  <Tab value="Full Stack">
+    Start all services with Docker Compose:
+
+    ```bash
+    docker compose -f docker-compose.dev.yaml up -d
+    ```
+  </Tab>
+</Tabs>
+
+### Verify Services
+
+- **API Server**: http://localhost:3000/health
+- **Dashboard**: http://localhost:3002
+- **Kafka UI**: http://localhost:8080
+- **Grafana**: http://localhost:3001
+
+</Steps>
+
+---
+
+## Running Tests
+
+The Dev Container includes the Vitest extension for running tests:
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+<Callout type="info">
+Use the Vitest Explorer extension in VS Code sidebar for an interactive test runner.
+</Callout>
+
+---
+
+## Troubleshooting
+
+### Container fails to start
+
+**Check Docker Desktop is running:**
+- Ensure Docker Desktop (or Docker Engine) is running before opening VS Code
+
+**Rebuild the container:**
+1. Press `Ctrl+Shift+P` → "Dev Containers: Rebuild Container"
+2. Wait for the rebuild to complete
+
+### Infrastructure services not running
+
+**Manually start services:**
+```bash
+docker compose -f docker-compose.infra.yaml up -d
+```
+
+**Check Docker-in-Docker:**
+```bash
+docker ps
+# Should show infrastructure containers
+```
+
+### MongoDB connection issues
+
+**Wait for replica set initialization:**
+MongoDB replica set initialization can take up to 30 seconds. Check the health status:
+
+```bash
+docker compose -f docker-compose.infra.yaml ps mongo
+# Should show 'healthy' status
+```
+
+### Extension not working
+
+**Reload VS Code:**
+1. Press `Ctrl+Shift+P` → "Developer: Reload Window"
+2. Wait for extensions to activate
+
+<Callout type="info">
+For more issues, see the [Troubleshooting Guide](./troubleshooting).
+</Callout>
