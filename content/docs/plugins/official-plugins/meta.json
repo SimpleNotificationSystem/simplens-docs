@@ -2,6 +2,7 @@
     "title": "Official Plugins",
     "pages": [
         "nodemailer-gmail",
-        "mock"
+        "mock",
+        "resend"
     ]
 }

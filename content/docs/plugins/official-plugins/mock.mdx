@@ -40,11 +40,18 @@ This plugin simulates notification delivery by logging to the console. When a no
 
 ## Installation
 
+Generate the plugin configuration using the `@simplens/config-gen` CLI:
+
 ```bash
-npm run plugin:install @simplens/mock
+# Generate a new config file with the mock plugin
+npx @simplens/config-gen generate @simplens/mock
+
+# Or add to an existing config file
+npx @simplens/config-gen gen @simplens/mock -c simplens.config.yaml
 ```
+
 <Callout type="info">
-See the [Plugin Installation Guide](/docs/plugins#installation) for installing plugins in your simplens-core
+SimpleNS **automatically installs** plugins on startup based on your `simplens.config.yaml`. See the [Plugin Installation Guide](/docs/plugins#installing-plugins) for more details.
 </Callout>
 
 ---

@@ -40,11 +40,18 @@ This plugin creates a Nodemailer transporter configured for Gmail's SMTP servers
 
 ## Installation
 
+Generate the plugin configuration using the `@simplens/config-gen` CLI:
+
 ```bash
-npm run plugin:install @simplens/nodemailer-gmail
+# Generate a new config file with the nodemailer-gmail plugin
+npx @simplens/config-gen generate @simplens/nodemailer-gmail
+
+# Or add to an existing config file
+npx @simplens/config-gen gen @simplens/nodemailer-gmail -c simplens.config.yaml
 ```
+
 <Callout type="info">
-See the [Plugin Installation Guide](/docs/plugins#installation) for installing plugins in your simplens-core
+SimpleNS **automatically installs** plugins on startup based on your `simplens.config.yaml`. See the [Plugin Installation Guide](/docs/plugins#installing-plugins) for more details.
 </Callout>
 
 ---

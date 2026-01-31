@@ -9,7 +9,7 @@ export const officialPlugins: Plugin[] = [
         name: "Nodemailer Gmail",
         package: "@simplens/nodemailer-gmail",
         description:
-            "Send email notifications via Gmail SMTP using Nodemailer. Supports OAuth2 and App Password authentication.",
+            "Send email notifications via Gmail SMTP using Nodemailer.",
     },
     {
         name: "Mock",
@@ -17,6 +17,11 @@ export const officialPlugins: Plugin[] = [
         description:
             "A mock notification provider for testing and development. Logs notifications without sending them.",
     },
+    {
+        name: "Resend",
+        package: "@simplens/resend",
+        description: "Send email notifications using Resend."
+    }
 ];
 
 export const communityPlugins: Plugin[] = [

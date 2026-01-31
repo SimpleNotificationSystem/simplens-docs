@@ -1,0 +1,219 @@
+---
+title: Resend Plugin
+description: Send emails via Resend API with automatic image handling
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/plugins/official-plugins/resend.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/plugins/official-plugins/resend.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/plugins/official-plugins/resend.mdx"
+  />
+</div>
+
+---
+
+## What is Resend Plugin
+
+The `@simplens/resend` plugin enables email delivery through the [Resend](https://resend.com) API. Resend is a modern email API built for developers, offering excellent deliverability and a simple integration experience.
+
+## How It Works
+
+This plugin creates a Resend client and handles email delivery with advanced features:
+
+1. The plugin receives the notification payload
+2. Replaces any template variables in subject and HTML content
+3. Automatically extracts base64 images and converts them to CID attachments
+4. Sends the email via Resend API
+
+<Callout type="info">
+  Resend free tier allows 100 emails/day. Pro plans offer 5,000+ emails/day. Check [Resend Pricing](https://resend.com/pricing) for details.
+</Callout>
+
+---
+
+## Installation
+
+Generate the plugin configuration using the `@simplens/config-gen` CLI:
+
+```bash
+# Generate a new config file with the resend plugin
+npx @simplens/config-gen generate @simplens/resend
+
+# Or add to an existing config file
+npx @simplens/config-gen gen @simplens/resend -c simplens.config.yaml
+```
+
+<Callout type="info">
+SimpleNS **automatically installs** plugins on startup based on your `simplens.config.yaml`. See the [Plugin Installation Guide](/docs/plugins#installing-plugins) for more details.
+</Callout>
+
+---
+
+## Configuration
+
+Add the plugin to your `simplens.config.yaml` if you used `Config-first` method from [Plugin Installation Guide](/docs/plugins#installation):
+
+```yaml title="simplens.config.yaml"
+providers:
+  - package: "@simplens/resend"
+    id: email-resend
+    credentials:
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      FROM_EMAIL: ${FROM_EMAIL}
+    options:
+      rateLimit:
+        maxTokens: 100
+        refillRate: 100
+        refillInterval: day
+
+channels:
+  email:
+    default: "email-resend"
+```
+
+### Required Credentials
+
+| Key              | Description                                                                  |
+|------------------|------------------------------------------------------------------------------|
+| `RESEND_API_KEY` | Your Resend API key ([get one here](https://resend.com/api-keys))           |
+| `FROM_EMAIL`     | Verified sender email address ([verify domain](https://resend.com/domains)) |
+
+### Rate Limiting Options
+
+| Key              | Default   | Description                                    |
+|------------------|-----------|------------------------------------------------|
+| `maxTokens`      | `100`     | Max emails in bucket                           |
+| `refillRate`     | `100`     | Tokens refilled per interval                   |
+| `refillInterval` | `day`     | Interval: `second`, `minute`, `hour`, or `day` |
+
+### Recommended Rate Limit Configurations
+
+| Plan | Suggested Config                                          |
+|------|-----------------------------------------------------------|
+| Free | `maxTokens: 100, refillRate: 100, refillInterval: day`    |
+| Pro  | `maxTokens: 5000, refillRate: 5000, refillInterval: day`  |
+
+---
+
+## Resend API Key Setup
+
+<Steps>
+
+### Create a Resend Account
+Go to [resend.com](https://resend.com) and sign up for a free account.
+
+### Get Your API Key
+Navigate to [API Keys](https://resend.com/api-keys) and create a new API key.
+
+### Verify Your Domain
+Go to [Domains](https://resend.com/domains) and add your sending domain. Follow the DNS verification steps.
+
+### Configure Your Plugin
+Set `RESEND_API_KEY` and `FROM_EMAIL` in your environment variables.
+
+</Steps>
+
+<Callout type="warn">
+  You must verify your domain in Resend before sending emails. Without verification, you can only send to your own email address.
+</Callout>
+
+---
+
+## Environment Variables
+
+```bash title=".env"
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxx
+FROM_EMAIL=notifications@yourdomain.com
+```
+
+---
+
+## Notification Payload
+
+- You can easily get and configure this request payload from `Payload Studio` in [Admin Dashboard](/docs/core/admin-dashboard#payload-studio)
+
+```json
+{
+  "request_id": "uuid-v4",
+  "client_id": "uuid-v4",
+  "channel": "email",
+  "recipient": {
+    "user_id": "user-123",
+    "email": "recipient@example.com"
+  },
+  "content": {
+    "subject": "Welcome {{name}}!",
+    "html": "<h1>Hello {{name}}</h1><p>Your order #{{order_id}} is confirmed.</p>"
+  },
+  "variables": {
+    "name": "John",
+    "order_id": "12345"
+  }
+}
+```
+
+### Notification Schema
+
+| Field                 | Type       | Required | Description                                  |
+|-----------------------|------------|----------|----------------------------------------------|
+| `channel`             | `'email'`  | ✅       | Must be `'email'`                            |
+| `recipient.user_id`   | `string`   | ✅       | User identifier                              |
+| `recipient.email`     | `string`   | ✅       | Valid email address                          |
+| `content.subject`     | `string`   | ✅       | Email subject line                           |
+| `content.html`        | `string`   | ✅       | HTML content (must contain at least one tag) |
+| `variables`           | `object`   | ❌       | Template variables for replacement           |
+
+---
+
+## Features
+
+| Feature                     | Description                                              |
+|-----------------------------|----------------------------------------------------------|
+| **HTML Email Support**      | Send rich HTML emails                                    |
+| **Template Variables**      | Supports `{{key}}`, `${key}`, `{key}`, `$key` syntax     |
+| **Auto Image Extraction**   | Converts base64 images to CID attachments automatically  |
+| **Rate Limiting**           | Configurable token bucket with refill intervals          |
+| **Smart Retry**             | Classifies errors as retryable or non-retryable          |
+| **TypeScript Support**      | Full TypeScript definitions included                     |
+
+---
+
+## Template Variable Syntax
+
+The plugin supports multiple template variable formats:
+
+| Format         | Example                  |
+|----------------|--------------------------|
+| Handlebars     | `{{variable}}`           |
+| ES6 Template   | `${variable}`            |
+| Simple Brace   | `{variable}`             |
+| Shell/PHP      | `$variable`              |
+
+<Callout type="info">
+  Unmatched variables are left as-is in the output, allowing for safe partial replacements.
+</Callout>
+
+---
+
+## Base64 Image Handling
+
+The plugin automatically detects base64-encoded images in your HTML content and converts them to CID (Content-ID) attachments. This improves email deliverability as many email clients block inline base64 images.
+
+**Before processing:**
+```html
+<img src="data:image/png;base64,iVBORw0KGgo..." alt="Logo">
+```
+
+**After processing:**
+```html
+<img src="cid:embedded-image-0-1234567890" alt="Logo">
+```
+
+The base64 data is automatically attached to the email as a proper image attachment.
