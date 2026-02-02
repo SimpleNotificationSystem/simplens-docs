@@ -5,8 +5,9 @@ import { Github, Package, Rocket, Bug, Anchor, ExternalLink, Calendar, Tag, Chev
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, type Easing } from "framer-motion"
 import { ContainerIcon } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 // Types for changelog data structure (mirrors the MDX frontmatter)
 interface FeatureGroup {
@@ -24,12 +25,67 @@ interface Release {
     bugFixes?: string[]
 }
 
+// Animation variants
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1,
+            delayChildren: 0.1
+        }
+    }
+}
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.5,
+            ease: [0.25, 0.1, 0.25, 1] as Easing
+        }
+    }
+}
+
+const heroVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.6,
+            ease: [0.25, 0.1, 0.25, 1] as Easing
+        }
+    }
+}
+
+const skeletonVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: (i: number) => ({
+        opacity: 1,
+        scale: 1,
+        transition: {
+            delay: i * 0.1,
+            duration: 0.4,
+            ease: [0.25, 0.1, 0.25, 1] as Easing
+        }
+    })
+}
+
 // Release Card Component
-function ReleaseCard({ release }: { release: Release }) {
+function ReleaseCard({ release, index }: { release: Release; index: number }) {
     const [isExpanded, setIsExpanded] = useState(false)
 
     return (
-        <article className="relative mb-4">
+        <motion.article
+            className="relative mb-4"
+            variants={itemVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ delay: index * 0.1 }}
+        >
             {/* Card Container */}
             <div className="bg-[#121212] border border-white/5 rounded-2xl overflow-hidden hover:border-white/10 transition-all">
                 {/* Clickable Header */}
@@ -193,7 +249,7 @@ function ReleaseCard({ release }: { release: Release }) {
                     )}
                 </AnimatePresence>
             </div>
-        </article>
+        </motion.article>
     )
 }
 
@@ -219,24 +275,56 @@ export default function ChangelogPage() {
             {/* Hero Section */}
             <section className="relative pt-32 pb-16 overflow-hidden">
                 {/* Background gradient */}
-                <div className="absolute inset-0 bg-linear-to-b from-blue-500/5 via-transparent to-transparent" />
-                <div className="absolute top-20 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
-                <div className="absolute top-40 right-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
+                <motion.div
+                    className="absolute inset-0 bg-linear-to-b from-blue-500/5 via-transparent to-transparent"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1 }}
+                />
+                <motion.div
+                    className="absolute top-20 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 1.2, delay: 0.2 }}
+                />
+                <motion.div
+                    className="absolute top-40 right-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 1.2, delay: 0.4 }}
+                />
 
-                <div className="relative max-w-4xl mx-auto px-6 text-center">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6">
+                <motion.div
+                    className="relative max-w-4xl mx-auto px-6 text-center"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                >
+                    <motion.div
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6"
+                        variants={heroVariants}
+                    >
                         <Package className="w-4 h-4 text-blue-400" />
                         <span className="text-sm text-zinc-400">Release History</span>
-                    </div>
+                    </motion.div>
 
-                    <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-linear-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent p-4">
+                    <motion.h1
+                        className="text-4xl md:text-6xl font-bold mb-6 bg-linear-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent p-4"
+                        variants={heroVariants}
+                    >
                         Changelog
-                    </h1>
-                    <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
+                    </motion.h1>
+                    <motion.p
+                        className="text-lg text-zinc-400 max-w-2xl mx-auto"
+                        variants={heroVariants}
+                    >
                         Track the evolution of SimpleNS. Every feature, improvement, and fix documented for transparency.
-                    </p>
+                    </motion.p>
 
-                    <div className="flex items-center justify-center gap-4 mt-8">
+                    <motion.div
+                        className="flex items-center justify-center gap-4 mt-8"
+                        variants={heroVariants}
+                    >
                         <Link
                             href="https://github.com/SimpleNotificationSystem/simplens-core/releases"
                             target="_blank"
@@ -246,22 +334,64 @@ export default function ChangelogPage() {
                             View on GitHub
                             <ExternalLink className="w-3 h-3" />
                         </Link>
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
             </section>
 
             {/* Releases Timeline */}
             <section className="max-w-4xl mx-auto px-6 pb-24">
                 <div className="relative">
-                    {loading ? (
-                        <div className="pl-8 md:pl-20 py-12 text-center text-zinc-500">
-                            Loading releases...
-                        </div>
-                    ) : (
-                        releases.map((release) => (
-                            <ReleaseCard key={release.version} release={release} />
-                        ))
-                    )}
+                    <AnimatePresence mode="wait">
+                        {loading ? (
+                            <motion.div
+                                key="skeleton"
+                                className="space-y-4"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {[0, 1, 2].map((i) => (
+                                    <motion.div
+                                        key={i}
+                                        className="bg-[#121212] border border-white/5 rounded-2xl p-6"
+                                        custom={i}
+                                        variants={skeletonVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                    >
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1 space-y-3">
+                                                <div className="flex items-center gap-3">
+                                                    <Skeleton className="h-8 w-24" />
+                                                    <Skeleton className="h-6 w-16 rounded-full" />
+                                                </div>
+                                                <Skeleton className="h-4 w-32" />
+                                                <Skeleton className="h-4 w-full max-w-md" />
+                                            </div>
+                                            <Skeleton className="h-6 w-6 shrink-0" />
+                                        </div>
+                                        <div className="flex gap-3 mt-4 pt-4 border-t border-white/5">
+                                            <Skeleton className="h-4 w-20" />
+                                            <Skeleton className="h-4 w-16" />
+                                            <Skeleton className="h-4 w-18" />
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="releases"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {releases.map((release, index) => (
+                                    <ReleaseCard key={release.version} release={release} index={index} />
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </section>
 
