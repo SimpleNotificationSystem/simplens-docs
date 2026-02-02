@@ -1,183 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import Image from "next/image"
 import { Button } from "./ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
-import { ArrowRight, Server, Database, Radio, Container, Check, Copy, Terminal, Monitor, Package } from "lucide-react"
+import { ArrowRight, Server, Database, Radio } from "lucide-react"
 import { motion } from "framer-motion"
-
-// Base URL from environment variable or default
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://simplens.vercel.app"
-
-// Tab data type
-interface TabData {
-    label: string
-    icon: React.ReactNode
-    commands: {
-        primary: string
-        description: string
-        secondary?: string
-        secondaryDescription?: string
-    }
-    info: string
-}
-
-// Tab data
-const tabsData: Record<string, TabData> = {
-    linux: {
-        label: "Linux",
-        icon: <Terminal className="h-3.5 w-3.5" />,
-        commands: {
-            primary: `curl -fsSL ${BASE_URL}/api/install/linux | bash`,
-            description: "Run with bash",
-        },
-        info: "Works on Ubuntu, Debian, CentOS, and other Linux distros",
-    },
-    windows: {
-        label: "Windows",
-        icon: <Monitor className="h-3.5 w-3.5" />,
-        commands: {
-            primary: `irm ${BASE_URL}/api/install/windows | iex`,
-            description: "Run in PowerShell (Admin)",
-        },
-        info: "Requires PowerShell 5.1+ running as Administrator",
-    },
-    npm: {
-        label: "npm",
-        icon: <Package className="h-3.5 w-3.5" />,
-        commands: {
-            primary: "npx @simplens/onboard",
-            description: "Quick start with npx",
-            secondary: "npm i -g @simplens/onboard",
-            secondaryDescription: "Or install globally",
-        },
-        info: "Requires Node.js 18+ and npm installed",
-    },
-}
-
-// Copy Button Component
-const CopyButton = ({ text }: { text: string }) => {
-    const [copied, setCopied] = useState(false)
-
-    const handleCopy = async () => {
-        await navigator.clipboard.writeText(text)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-    }
-
-    return (
-        <button
-            onClick={handleCopy}
-            className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors text-zinc-400 hover:text-white shrink-0"
-            title="Copy to clipboard"
-        >
-            {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
-        </button>
-    )
-}
-
-// Command Block Component
-const CommandBlock = ({ command, description }: { command: string; description: string }) => (
-    <div className="space-y-2">
-        <div className="text-xs text-zinc-500">{description}</div>
-        <div className="flex items-center justify-between gap-3 bg-zinc-900/50 rounded-lg p-3 border border-zinc-800">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="text-green-400 shrink-0">$</span>
-                <code className="text-zinc-300 text-sm truncate">{command}</code>
-            </div>
-            <CopyButton text={command} />
-        </div>
-    </div>
-)
-
-// Installation Tabs Component
-const InstallationTabs = () => {
-    return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="relative"
-        >
-            {/* Terminal Window */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden shadow-2xl">
-                <Tabs defaultValue="linux" className="w-full">
-                    {/* Terminal Header */}
-                    <div className="px-4 py-3 bg-zinc-900 border-b border-zinc-800">
-                        {/* Top row with window controls */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="flex gap-1.5">
-                                    <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                                    <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                                    <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                                </div>
-                                <span className="text-xs text-zinc-500 ml-2 font-mono hidden sm:inline">Installation</span>
-                            </div>
-
-                            {/* Desktop: Tabs in header */}
-                            <TabsList className="hidden sm:flex bg-zinc-800/50 border border-zinc-700 p-1">
-                                {Object.entries(tabsData).map(([key, tab]) => (
-                                    <TabsTrigger
-                                        key={key}
-                                        value={key}
-                                        className="text-xs data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400 data-[state=active]:border-blue-500/30 px-3 py-1.5"
-                                    >
-                                        <span className="mr-1.5">{tab.icon}</span>
-                                        {tab.label}
-                                    </TabsTrigger>
-                                ))}
-                            </TabsList>
-                        </div>
-
-                        {/* Mobile: Tabs below header */}
-                        <TabsList className="flex sm:hidden bg-zinc-800/50 border border-zinc-700 p-1 mt-3 w-full justify-center">
-                            {Object.entries(tabsData).map(([key, tab]) => (
-                                <TabsTrigger
-                                    key={key}
-                                    value={key}
-                                    className="text-xs data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400 data-[state=active]:border-blue-500/30 px-3 py-1.5 flex-1"
-                                >
-                                    <span className="mr-1.5">{tab.icon}</span>
-                                    {tab.label}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </div>
-
-                    {/* Terminal Content */}
-                    <div className="p-5 font-mono text-sm">
-                        {Object.entries(tabsData).map(([key, tab]) => (
-                            <TabsContent key={key} value={key} className="mt-0 space-y-4">
-                                <CommandBlock
-                                    command={tab.commands.primary}
-                                    description={tab.commands.description}
-                                />
-
-                                {tab.commands.secondary && (
-                                    <CommandBlock
-                                        command={tab.commands.secondary}
-                                        description={tab.commands.secondaryDescription || ""}
-                                    />
-                                )}
-
-                                {/* Info Message */}
-                                <div className="text-zinc-500 text-xs pt-2 border-t border-zinc-800">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-blue-400">ℹ</span>
-                                        <span>{tab.info}</span>
-                                    </div>
-                                </div>
-                            </TabsContent>
-                        ))}
-                    </div>
-                </Tabs>
-            </div >
-        </motion.div >
-    )
-}
 
 // Deployment Badge Component
 interface DeploymentBadgeProps {
@@ -290,35 +117,32 @@ export const SelfHostingSection = () => {
                                 asChild
                             >
                                 <Link href="/docs/core/self-hosting">
-                                    For More Advanced Self-Hosting
+                                    Self-Hosting Guide
                                     <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                                 </Link>
                             </Button>
                         </motion.div>
                     </div>
 
-                    {/* Right Side - Installation Tabs */}
-                    <InstallationTabs />
+                    {/* Right Side - Illustration */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        className="relative flex items-center justify-center pointer-events-none select-none"
+                    >
+                        <div className="relative w-full max-w-[600px] aspect-square">
+                            <Image
+                                src="/images/docker-whale.png"
+                                alt="SimpleNS Architecture Illustration"
+                                fill
+                                className="object-contain drop-shadow-[0_0_50px_rgba(59,130,246,0.3)]"
+                                priority
+                            />
+                        </div>
+                    </motion.div>
                 </div>
-
-                {/* Bottom Deployment Badges */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
-                    className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4"
-                >
-                    {deploymentOptions.map((option, index) => (
-                        <DeploymentBadge
-                            key={option.label}
-                            icon={option.icon}
-                            label={option.label}
-                            description={option.description}
-                            delay={0.6 + index * 0.1}
-                        />
-                    ))}
-                </motion.div>
             </div>
         </section>
     )
