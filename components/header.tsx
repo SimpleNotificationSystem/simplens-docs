@@ -2,9 +2,8 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { Button } from "./ui/button"
-import { Github, Menu, X, ChevronDown, ChevronRight, Star } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Github, Menu, X, ChevronDown, ChevronRight, Star, BookOpen, Code, Cog, Download, Puzzle, Zap } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface NavGroup {
@@ -17,11 +16,67 @@ interface NavLink {
     label: string
 }
 
+// Documentation mega-menu items
+interface DocMenuItem {
+    icon: React.ReactNode
+    title: string
+    description: string
+    href: string
+    color: string
+}
+
+const docMenuItems: DocMenuItem[] = [
+    {
+        icon: <BookOpen className="w-5 h-5" />,
+        title: "Getting Started",
+        description: "Quick start guide to setup SimpleNS in minutes.",
+        href: "/docs/core/getting-started",
+        color: "text-emerald-400"
+    },
+    {
+        icon: <Code className="w-5 h-5" />,
+        title: "API Reference",
+        description: "Complete API documentation for integrations.",
+        href: "/docs/core/api-reference",
+        color: "text-blue-400"
+    },
+    {
+        icon: <Puzzle className="w-5 h-5" />,
+        title: "Plugins",
+        description: "Extend SimpleNS with powerful plugins.",
+        href: "/docs/plugins",
+        color: "text-purple-400"
+    },
+    {
+        icon: <Cog className="w-5 h-5" />,
+        title: "Configuration",
+        description: "Environment variables and config options.",
+        href: "/docs/core/configuration",
+        color: "text-amber-400"
+    },
+    {
+        icon: <Download className="w-5 h-5" />,
+        title: "Self-Hosting",
+        description: "Deploy SimpleNS on your own infrastructure.",
+        href: "/docs/core/self-hosting",
+        color: "text-rose-400"
+    },
+    {
+        icon: <Zap className="w-5 h-5" />,
+        title: "Dashboard",
+        description: "Monitor and manage your notifications.",
+        href: "/docs/core/admin-dashboard",
+        color: "text-yellow-400"
+    }
+]
+
 export const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
-    const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+    const [isDocsOpen, setIsDocsOpen] = useState(false)
     const [openMobileAccordion, setOpenMobileAccordion] = useState<string | null>(null)
     const [starCount, setStarCount] = useState<number | null>(null)
+    const docsMenuRef = useRef<HTMLDivElement>(null)
+    const docsButtonRef = useRef<HTMLButtonElement>(null)
 
     useEffect(() => {
         fetch('https://api.github.com/repos/SimpleNotificationSystem/simplens-core')
@@ -32,6 +87,23 @@ export const Header = () => {
                 }
             })
             .catch(() => setStarCount(null))
+    }, [])
+
+    // Close docs menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                docsMenuRef.current &&
+                docsButtonRef.current &&
+                !docsMenuRef.current.contains(event.target as Node) &&
+                !docsButtonRef.current.contains(event.target as Node)
+            ) {
+                setIsDocsOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
     const navGroups: NavGroup[] = [
@@ -46,6 +118,7 @@ export const Header = () => {
         {
             label: "Resources",
             items: [
+                { href: "#self-hosting", label: "Self-Hosting" },
                 { href: "#dashboard", label: "Dashboard" },
                 { href: "#why", label: "Why SimpleNS" },
                 { href: "#channels", label: "Multi-Channel" },
@@ -54,111 +127,164 @@ export const Header = () => {
     ]
 
     const directLinks: NavLink[] = [
-        { href: "/docs/core", label: "Docs" },
-        { href: "#faq", label: "FAQ" },
+        { href: "/changelog", label: "Changelog" },
+        { href: "#faq", label: "FAQ" }
     ]
 
     return (
         <>
-            <div className="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-black/80 backdrop-blur-md">
-                <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2">
-                        <Image
-                            src="/SimpleNSLogo.png"
-                            height={100}
-                            width={100}
-                            alt="SimpleNS Logo"
-                            className="h-8 w-auto"
-                        />
-                    </Link>
+            <div className="fixed top-0 inset-x-0 z-50">
+                {/* Main Header Bar */}
+                <div className="border-b border-white/5 bg-black/10 pt-2 pb-2 backdrop-blur-md">
+                    <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+                        {/* Logo */}
+                        <Link href="/" className="flex items-center gap-2">
+                            <Image
+                                src="/SimpleNSLogo.png"
+                                height={120}
+                                width={120}
+                                alt="SimpleNS Logo"
+                                className="h-10 w-auto"
+                            />
+                        </Link>
 
-                    {/* Desktop Navigation */}
-                    <nav className="hidden md:flex items-center gap-1">
-                        {/* Dropdown Groups */}
-                        {navGroups.map((group) => (
-                            <div
-                                key={group.label}
-                                className="relative"
-                                onMouseEnter={() => setOpenDropdown(group.label)}
-                                onMouseLeave={() => setOpenDropdown(null)}
-                            >
+                        {/* Desktop Navigation */}
+                        <nav className="hidden md:flex items-start gap-1">
+                            {/* Documentation Button with Mega Menu */}
+                            <Link href="/docs/core">
                                 <button
-                                    className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${openDropdown === group.label
-                                        ? "text-white bg-white/5"
-                                        : "text-zinc-400 hover:text-white"
+                                    ref={docsButtonRef}
+                                    onMouseEnter={() => setIsDocsOpen(true)}
+                                    className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${isDocsOpen
+                                        ? "text-white bg-white/10"
+                                        : "text-zinc-400 hover:text-white hover:bg-white/5"
                                         }`}
                                 >
-                                    {group.label}
-                                    <ChevronDown className={`h-4 w-4 transition-transform ${openDropdown === group.label ? "rotate-180" : ""}`} />
+                                    Documentation
+                                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isDocsOpen ? "rotate-180" : ""}`} />
                                 </button>
-
-                                <AnimatePresence>
-                                    {openDropdown === group.label && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 10 }}
-                                            transition={{ duration: 0.15 }}
-                                            className="absolute top-full left-0 mt-1 w-48 rounded-xl border border-white/10 bg-zinc-950 p-2 shadow-xl"
-                                        >
-                                            {group.items.map((item) => (
-                                                <Link
-                                                    key={item.href}
-                                                    href={item.href}
-                                                    className="block rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
-                                                >
-                                                    {item.label}
-                                                </Link>
-                                            ))}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        ))}
-
-                        {/* Direct Links */}
-                        {directLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className="px-4 py-2 text-sm font-medium text-zinc-400 rounded-lg transition-colors hover:text-white hover:bg-white/5"
-                            >
-                                {link.label}
                             </Link>
-                        ))}
-                    </nav>
+                            {/* Direct Links */}
+                            {directLinks.map((link) => (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    className="px-4 py-2 text-sm font-medium text-zinc-400 rounded-lg transition-colors hover:text-white hover:bg-white/5"
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </nav>
 
-                    {/* Right Actions */}
-                    <div className="hidden items-center gap-4 md:flex">
-                        <Link
-                            href="https://github.com/SimpleNotificationSystem/simplens-core"
-                            target="_blank"
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:text-white transition-colors rounded-lg border border-zinc-700 hover:border-zinc-500 bg-zinc-900/50"
+                        {/* Right Actions */}
+                        <div className="hidden items-center gap-4 md:flex">
+                            <Link
+                                href="https://github.com/SimpleNotificationSystem/simplens-core"
+                                target="_blank"
+                                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:text-white transition-colors rounded-lg border border-zinc-700 hover:border-zinc-500 bg-zinc-900/50"
+                            >
+                                <Github className="h-4 w-4" />
+                                <span>Star</span>
+                                {starCount !== null && (
+                                    <>
+                                        <span className="h-4 w-px bg-zinc-700" />
+                                        <span className="flex items-center gap-1">
+                                            <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                                            {starCount >= 1000 ? `${(starCount / 1000).toFixed(1)}k` : starCount}
+                                        </span>
+                                    </>
+                                )}
+                            </Link>
+                        </div>
+
+                        {/* Mobile Menu Button */}
+                        <button
+                            className="md:hidden p-2 text-zinc-400 hover:text-white"
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            aria-label="Toggle menu"
                         >
-                            <Github className="h-4 w-4" />
-                            <span>Star</span>
-                            {starCount !== null && (
-                                <>
-                                    <span className="h-4 w-px bg-zinc-700" />
-                                    <span className="flex items-center gap-1">
-                                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                                        {starCount >= 1000 ? `${(starCount / 1000).toFixed(1)}k` : starCount}
-                                    </span>
-                                </>
-                            )}
-                        </Link>
+                            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                        </button>
                     </div>
-
-                    {/* Mobile Menu Button */}
-                    <button
-                        className="md:hidden p-2 text-zinc-400 hover:text-white"
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        aria-label="Toggle menu"
-                    >
-                        {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                    </button>
                 </div>
+
+                {/* Mega Menu Dropdown - Desktop Only */}
+                <AnimatePresence>
+                    {isDocsOpen && (
+                        <motion.div
+                            ref={docsMenuRef}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                            className="hidden md:block overflow-hidden bg-black/60 backdrop-blur-xl border-b-2 border-white/5"
+                            onMouseLeave={() => setIsDocsOpen(false)}
+                        >
+                            <div className="mx-auto max-w-7xl px-6 py-8">
+                                <div className="grid grid-cols-12 gap-6">
+                                    {/* Featured Card - Left Side */}
+                                    <div className="col-span-4">
+                                        <Link
+                                            href="/docs/core"
+                                            className="group block h-full rounded-2xl overflow-hidden bg-[#121212] border border-white/10 hover:border-white/20 transition-all"
+                                            onClick={() => setIsDocsOpen(false)}
+                                        >
+                                            <div className="relative p-6 h-full flex flex-col justify-between min-h-[280px]">
+                                                {/* Decorative gradient orb */}
+                                                <div className="absolute top-0 right-0 w-40 h-40 bg-black rounded-full blur-3xl" />
+
+                                                <div className="relative z-10">
+                                                    <div className="flex flex-col items-start gap-3 mb-4">
+                                                        <Image
+                                                            src="/SimpleNSLogo.png"
+                                                            height={100}
+                                                            width={100}
+                                                            alt="SimpleNS"
+                                                            className="h-12 w-auto"
+                                                        />
+                                                        <h3 className="text-2xl font-bold text-white mb-2">
+                                                            The Notification<br />
+                                                            <span className="bg-linear-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent text-4xl">
+                                                                Infrastructure
+                                                            </span>
+                                                        </h3>
+                                                        <p className="text-zinc-400 text-sm mt-3">
+                                                            Open-source, self-hosted notification system for modern applications.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </div>
+
+                                    {/* Menu Items Grid - Right Side */}
+                                    <div className="col-span-8 grid grid-cols-2 gap-4">
+                                        {docMenuItems.map((item) => (
+                                            <Link
+                                                key={item.title}
+                                                href={item.href}
+                                                onClick={() => setIsDocsOpen(false)}
+                                                className="group flex items-start gap-4 p-4 rounded-xl bg-[#121212] border border-white/5 hover:border-white/10 transition-all"
+                                            >
+                                                <div className={`shrink-0 w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center ${item.color} group-hover:bg-white/10 transition-colors`}>
+                                                    {item.icon}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-white font-medium text-sm group-hover:text-white/90 transition-colors">
+                                                        {item.title}
+                                                    </h4>
+                                                    <p className="text-zinc-500 text-xs mt-1 line-clamp-2">
+                                                        {item.description}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Mobile Menu Overlay */}
@@ -168,7 +294,7 @@ export const Header = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 top-16 z-40 bg-black md:hidden overflow-y-auto"
+                        className="fixed inset-0 top-16 z-40 bg-black/80 backdrop-blur-md md:hidden overflow-y-auto"
                     >
                         <div className="flex flex-col p-6">
                             {/* Accordion Groups */}
@@ -227,6 +353,15 @@ export const Header = () => {
                                 </Link>
                             ))}
 
+                            {/* Docs Link */}
+                            <Link
+                                href="/docs/core"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="py-4 text-lg font-medium text-white border-b border-zinc-800"
+                            >
+                                Documentation
+                            </Link>
+
                             {/* Bottom Actions */}
                             <div className="mt-8 space-y-4">
                                 <Link
@@ -237,7 +372,7 @@ export const Header = () => {
                                     <Github className="h-5 w-5" />
                                     <span>Star on GitHub</span>
                                     {starCount !== null && (
-                                        <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-800 text-sm">
+                                        <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-transparent text-sm">
                                             <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
                                             {starCount >= 1000 ? `${(starCount / 1000).toFixed(1)}k` : starCount}
                                         </span>
