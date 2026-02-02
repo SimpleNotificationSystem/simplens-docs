@@ -1,0 +1,8 @@
+# robots.txt for SimpleNS Documentation
+# https://www.robotstxt.org/robotstxt.html
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://simplens.in/sitemap.xml

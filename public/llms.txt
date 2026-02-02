@@ -1,0 +1,46 @@
+# SimpleNS Documentation - LLM Crawling Information
+# https://llmstxt.org/
+
+# Title: SimpleNS - Simple Notification System
+# Description: SimpleNS is a self-hosted, open-source notification infrastructure for sending emails, SMS, push notifications, and more.
+
+## Overview
+SimpleNS is a scalable, self-hosted notification system that provides:
+- Multi-channel notifications (Email, SMS, Push, Discord, Slack, WhatsApp)
+- Plugin-based architecture for extensibility
+- Delayed and scheduled notifications
+- Retry mechanisms with exponential backoff
+- Real-time status tracking and webhooks
+- Dashboard for monitoring and management
+
+## Documentation Sections
+
+### Core
+- /docs/core - Core documentation index
+- /docs/core/getting-started - Getting started guide
+- /docs/core/configuration - Configuration options
+- /docs/core/core-concepts - Core concepts and architecture
+- /docs/core/api-reference - API Reference
+- /docs/core/architecture - System architecture
+- /docs/core/admin-dashboard - Admin dashboard guide
+- /docs/core/self-hosting - Self-hosting guide
+- /docs/core/local-development - Local development setup
+- /docs/core/troubleshooting - Troubleshooting guide
+
+### SDKs
+- /docs/sdk - SDK documentation index
+- /docs/sdk/api-reference - SDK API Reference
+- /docs/sdk/building-plugin - Building custom plugins
+- /docs/sdk/manifest - Plugin manifest documentation
+- /docs/sdk/plugin-interface - Plugin interface reference
+- /docs/sdk/schemas - Schema definitions
+- /docs/sdk/utilities - SDK utilities
+
+### Plugins
+- /docs/plugins - Available plugins and documentation
+
+## Source Code
+- GitHub: https://github.com/SimpleNotificationSystem/simplens-core
+
+## License
+MIT License
