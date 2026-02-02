@@ -162,7 +162,7 @@ const CompactInstallCard = () => {
             {/* Documentation Link */}
             <div className="mt-3 text-center">
                 <p className="text-sm text-zinc-500">
-                   or read the <a href="/docs/core/self-hosting" className="underline">documentation.</a>
+                    or read the <a href="/docs/core/self-hosting" className="underline">documentation.</a>
                 </p>
             </div>
         </div>
@@ -181,9 +181,7 @@ export const HeroSection = () => {
     }, [])
 
     return (
-        <section className="min-h-screen bg-[#0a0a0a] flex items-center relative overflow-hidden">
-            {/* Background Light Rays */}
-            <LightRays className="z-0 opacity-40" />
+        <section className="min-h-screen flex items-center relative overflow-hidden">
 
             {/* Background Grid */}
             <div className="absolute inset-0 bg-[radial-gradient(#ffffff1a_1px,transparent_1px)] bg-size-[20px_20px] mask-[radial-gradient(ellipse_60%_60%_at_50%_50%,#000_10%,transparent_100%)] opacity-20 pointer-events-none z-0" />

@@ -93,11 +93,11 @@ export const FAQSection = () => {
     ]
 
     return (
-        <section className="relative overflow-hidden bg-black py-24 px-6" id="faq">
+        <section className="relative overflow-hidden py-24 px-6" id="faq">
             {/* Background */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            {/* <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute right-1/4 top-0 h-96 w-96 rounded-full bg-blue-900/10 blur-3xl" />
-            </div>
+            </div> */}
 
             <div className="relative z-10 mx-auto max-w-3xl">
                 {/* Header */}

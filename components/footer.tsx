@@ -22,7 +22,7 @@ export const Footer = () => {
     }
 
     return (
-        <footer className="border-t border-zinc-800 bg-black px-6 py-12">
+        <footer className="border-t border-zinc-800 px-6 py-12">
             <div className="mx-auto max-w-5xl">
                 {/* Main Footer Content */}
                 <div className="grid gap-8 md:grid-cols-4">

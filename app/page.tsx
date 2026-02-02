@@ -10,21 +10,28 @@ import { UseCasesSection } from "@/components/use-cases";
 import { SelfHostingSection } from "@/components/self-hosting-section";
 import { FAQSection } from "@/components/faq-section";
 import { Footer } from "@/components/footer";
+import { LightRays } from "@/components/ui/light-rays";
 
 export default function Home() {
   return (
-    <>
-      <Header />
-      <HeroSection />
-      <FeaturesSection />
-      <SelfHostingSection />
-      <HowItWorksSection />
-      <MultiChannelSection />
-      <DashboardSection />
-      <WhySimpleNSSection />
-      <UseCasesSection />
-      <FAQSection />
-      <Footer />
-    </>
+    <div className="relative min-h-screen bg-[#0a0a0a] overflow-hidden">
+      {/* Global Light Rays Background */}
+      <LightRays className="fixed inset-0 z-0 opacity-30 pointer-events-none" />
+
+      {/* Page Content */}
+      <div className="relative z-10">
+        <Header />
+        <HeroSection />
+        <FeaturesSection />
+        <SelfHostingSection />
+        <HowItWorksSection />
+        <MultiChannelSection />
+        <DashboardSection />
+        <WhySimpleNSSection />
+        <UseCasesSection />
+        <FAQSection />
+        <Footer />
+      </div>
+    </div>
   );
 }

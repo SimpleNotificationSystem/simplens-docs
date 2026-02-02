@@ -182,9 +182,9 @@ const PluginsVisual = () => (
     <div className="relative h-28 w-full flex items-center justify-center">
         <div className="flex gap-2">
             {[
-                { icon: <Mail className='text-white'/>, active: true },
-                { icon: <TestTube className="text-white"/>, active: true },
-                { icon: <Plus className="text-white"/>, active: false},
+                { icon: <Mail className='text-white' />, active: true },
+                { icon: <TestTube className="text-white" />, active: true },
+                { icon: <Plus className="text-white" />, active: false },
             ].map((plugin, i) => (
                 <motion.div
                     key={i}
@@ -403,12 +403,12 @@ export const DashboardSection = () => {
     ]
 
     return (
-        <section className="relative overflow-hidden bg-[#0a0a0a] py-24 px-6" id="dashboard">
+        <section className="relative overflow-hidden py-24 px-6" id="dashboard">
             {/* Background */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            {/* <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute right-1/4 top-0 h-96 w-96 rounded-full bg-blue-900/10 blur-3xl" />
                 <div className="absolute left-1/3 bottom-0 h-96 w-96 rounded-full bg-blue-800/10 blur-3xl" />
-            </div>
+            </div> */}
 
             <div className="relative z-10 mx-auto max-w-6xl">
                 {/* Header */}

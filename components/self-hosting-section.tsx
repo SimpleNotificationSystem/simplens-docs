@@ -54,12 +54,12 @@ export const SelfHostingSection = () => {
     ]
 
     return (
-        <section className="relative overflow-hidden bg-black py-24 px-6" id="self-hosting">
+        <section className="relative overflow-hidden py-24 px-6" id="self-hosting">
             {/* Background Effects */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            {/* <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute right-0 top-1/4 h-[500px] w-[500px] rounded-full bg-blue-900/20 blur-[120px]" />
                 <div className="absolute left-0 bottom-1/4 h-[400px] w-[400px] rounded-full bg-indigo-900/15 blur-[100px]" />
-            </div>
+            </div> */}
 
             <div className="relative z-10 mx-auto max-w-7xl">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">

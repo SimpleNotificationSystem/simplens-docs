@@ -265,12 +265,12 @@ export const UseCasesSection = () => {
     ]
 
     return (
-        <section className="relative overflow-hidden bg-[#0a0a0a] py-24 px-6" id="use-cases">
+        <section className="relative overflow-hidden py-24 px-6" id="use-cases">
             {/* Background */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            {/* <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-blue-900/10 blur-3xl" />
                 <div className="absolute right-1/4 bottom-1/4 h-96 w-96 rounded-full bg-blue-800/10 blur-3xl" />
-            </div>
+            </div> */}
 
             <div className="relative z-10 mx-auto max-w-5xl">
                 {/* Header */}

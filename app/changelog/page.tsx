@@ -8,6 +8,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence, type Easing } from "framer-motion"
 import { ContainerIcon } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { LightRays } from "@/components/ui/light-rays"
 
 // Types for changelog data structure (mirrors the MDX frontmatter)
 interface FeatureGroup {
@@ -232,11 +233,11 @@ function ReleaseCard({ release, index }: { release: Release; index: number }) {
                                         <h3 className="text-xl font-semibold">Docker Images</h3>
                                     </div>
 
-                                    <div className="bg-black/30 border border-white/5 rounded-xl p-5">
+                                    <div className="bg-black/30 border border-white/5 rounded-xl p-5 overflow-hidden">
                                         <div className="space-y-2 font-mono text-sm">
                                             {release.dockerImages.map((image, i) => (
-                                                <div key={i} className="flex items-center gap-3">
-                                                    <code className="text-zinc-300">
+                                                <div key={i} className="overflow-x-auto">
+                                                    <code className="text-zinc-300 break-all">
                                                         <span className="text-blue-400">{image}</span>
                                                     </code>
                                                 </div>
@@ -269,133 +270,118 @@ export default function ChangelogPage() {
     }, [])
 
     return (
-        <div className="min-h-screen bg-black text-white">
-            <Header />
+        <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
+            {/* Global Light Rays Background */}
+            <LightRays className="fixed inset-0 z-0 opacity-30 pointer-events-none" />
 
-            {/* Hero Section */}
-            <section className="relative pt-32 pb-16 overflow-hidden">
-                {/* Background gradient */}
-                <motion.div
-                    className="absolute inset-0 bg-linear-to-b from-blue-500/5 via-transparent to-transparent"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 1 }}
-                />
-                <motion.div
-                    className="absolute top-20 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 1.2, delay: 0.2 }}
-                />
-                <motion.div
-                    className="absolute top-40 right-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 1.2, delay: 0.4 }}
-                />
+            <div className="relative z-10">
+                <Header />
 
-                <motion.div
-                    className="relative max-w-4xl mx-auto px-6 text-center"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                >
+                {/* Hero Section */}
+                <section className="relative pt-32 pb-16 overflow-hidden">
                     <motion.div
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6"
-                        variants={heroVariants}
+                        className="relative max-w-4xl mx-auto px-6 text-center"
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
                     >
-                        <Package className="w-4 h-4 text-blue-400" />
-                        <span className="text-sm text-zinc-400">Release History</span>
-                    </motion.div>
-
-                    <motion.h1
-                        className="text-4xl md:text-6xl font-bold mb-6 bg-linear-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent p-4"
-                        variants={heroVariants}
-                    >
-                        Changelog
-                    </motion.h1>
-                    <motion.p
-                        className="text-lg text-zinc-400 max-w-2xl mx-auto"
-                        variants={heroVariants}
-                    >
-                        Track the evolution of SimpleNS. Every feature, improvement, and fix documented for transparency.
-                    </motion.p>
-
-                    <motion.div
-                        className="flex items-center justify-center gap-4 mt-8"
-                        variants={heroVariants}
-                    >
-                        <Link
-                            href="https://github.com/SimpleNotificationSystem/simplens-core/releases"
-                            target="_blank"
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-black hover:bg-white/90 border border-white/10 rounded-[10px] text-sm font-medium transition-colors"
+                        <motion.div
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6"
+                            variants={heroVariants}
                         >
-                            <Github className="w-4 h-4" />
-                            View on GitHub
-                            <ExternalLink className="w-3 h-3" />
-                        </Link>
+                            <Package className="w-4 h-4 text-blue-400" />
+                            <span className="text-sm text-zinc-400">Release History</span>
+                        </motion.div>
+
+                        <motion.h1
+                            className="text-4xl md:text-6xl font-bold mb-6 bg-linear-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent p-4"
+                            variants={heroVariants}
+                        >
+                            Changelog
+                        </motion.h1>
+                        <motion.p
+                            className="text-lg text-zinc-400 max-w-2xl mx-auto"
+                            variants={heroVariants}
+                        >
+                            Track the evolution of SimpleNS. Every feature, improvement, and fix documented for transparency.
+                        </motion.p>
+
+                        <motion.div
+                            className="flex items-center justify-center gap-4 mt-8"
+                            variants={heroVariants}
+                        >
+                            <Link
+                                href="https://github.com/SimpleNotificationSystem/simplens-core/releases"
+                                target="_blank"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-black hover:bg-white/90 border border-white/10 rounded-[10px] text-sm font-medium transition-colors"
+                            >
+                                <Github className="w-4 h-4" />
+                                View on GitHub
+                                <ExternalLink className="w-3 h-3" />
+                            </Link>
+                        </motion.div>
                     </motion.div>
-                </motion.div>
-            </section>
+                </section>
 
-            {/* Releases Timeline */}
-            <section className="max-w-4xl mx-auto px-6 pb-24">
-                <div className="relative">
-                    <AnimatePresence mode="wait">
-                        {loading ? (
-                            <motion.div
-                                key="skeleton"
-                                className="space-y-4"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                {[0, 1, 2].map((i) => (
-                                    <motion.div
-                                        key={i}
-                                        className="bg-[#121212] border border-white/5 rounded-2xl p-6"
-                                        custom={i}
-                                        variants={skeletonVariants}
-                                        initial="hidden"
-                                        animate="visible"
-                                    >
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="flex-1 space-y-3">
-                                                <div className="flex items-center gap-3">
-                                                    <Skeleton className="h-8 w-24" />
-                                                    <Skeleton className="h-6 w-16 rounded-full" />
+                {/* Releases Timeline */}
+                <section className="max-w-4xl mx-auto px-6 pb-24">
+                    <div className="relative">
+                        <AnimatePresence mode="wait">
+                            {loading ? (
+                                <motion.div
+                                    key="skeleton"
+                                    className="space-y-4"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    {[0, 1, 2].map((i) => (
+                                        <motion.div
+                                            key={i}
+                                            className="bg-[#121212] border border-white/5 rounded-2xl p-6"
+                                            custom={i}
+                                            variants={skeletonVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                        >
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="flex-1 space-y-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <Skeleton className="h-8 w-24" />
+                                                        <Skeleton className="h-6 w-16 rounded-full" />
+                                                    </div>
+                                                    <Skeleton className="h-4 w-32" />
+                                                    <Skeleton className="h-4 w-full max-w-md" />
                                                 </div>
-                                                <Skeleton className="h-4 w-32" />
-                                                <Skeleton className="h-4 w-full max-w-md" />
+                                                <Skeleton className="h-6 w-6 shrink-0" />
                                             </div>
-                                            <Skeleton className="h-6 w-6 shrink-0" />
-                                        </div>
-                                        <div className="flex gap-3 mt-4 pt-4 border-t border-white/5">
-                                            <Skeleton className="h-4 w-20" />
-                                            <Skeleton className="h-4 w-16" />
-                                            <Skeleton className="h-4 w-18" />
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="releases"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                {releases.map((release, index) => (
-                                    <ReleaseCard key={release.version} release={release} index={index} />
-                                ))}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            </section>
+                                            <div className="flex gap-3 mt-4 pt-4 border-t border-white/5">
+                                                <Skeleton className="h-4 w-20" />
+                                                <Skeleton className="h-4 w-16" />
+                                                <Skeleton className="h-4 w-18" />
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="releases"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    {releases.map((release, index) => (
+                                        <ReleaseCard key={release.version} release={release} index={index} />
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </section>
 
-            <Footer />
+                <Footer />
+            </div>
         </div>
     )
 }

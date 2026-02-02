@@ -188,11 +188,11 @@ export const WhySimpleNSSection = () => {
     ]
 
     return (
-        <section className="relative overflow-hidden bg-black py-24 px-6" id="why">
+        <section className="relative overflow-hidden py-24 px-6" id="why">
             {/* Background */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            {/* <div className="pointer-events-none absolute inset-0 overflow-hidden">
                 <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[600px] w-[600px] rounded-full bg-blue-900/20 blur-[120px]" />
-            </div>
+            </div> */}
 
             <div className="relative z-10 mx-auto max-w-5xl">
                 {/* Header */}
