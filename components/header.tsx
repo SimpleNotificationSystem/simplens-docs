@@ -128,7 +128,6 @@ export const Header = () => {
 
     const directLinks: NavLink[] = [
         { href: "/changelog", label: "Changelog" },
-        { href: "#faq", label: "FAQ" }
     ]
 
     return (
