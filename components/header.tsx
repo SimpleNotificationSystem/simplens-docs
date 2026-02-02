@@ -2,71 +2,49 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { Github, Menu, X, ChevronDown, ChevronRight, Star, BookOpen, Code, Cog, Download, Puzzle, Zap } from "lucide-react"
+import { Github, Menu, X, ChevronDown, ChevronRight, Star, BookOpen, Code, Puzzle } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-
-interface NavGroup {
-    label: string
-    items: { href: string; label: string }[]
-}
 
 interface NavLink {
     href: string
     label: string
 }
 
-// Documentation mega-menu items
+// Documentation mega-menu items - Bento grid cards
 interface DocMenuItem {
     icon: React.ReactNode
     title: string
     description: string
     href: string
     color: string
+    bgColor: string
 }
 
 const docMenuItems: DocMenuItem[] = [
     {
-        icon: <BookOpen className="w-5 h-5" />,
-        title: "Getting Started",
-        description: "Quick start guide to setup SimpleNS in minutes.",
-        href: "/docs/core/getting-started",
-        color: "text-emerald-400"
+        icon: <BookOpen className="w-6 h-6" />,
+        title: "Core",
+        description: "The main notification engine. Self-host, configure, and scale your notification infrastructure.",
+        href: "/docs/core",
+        color: "text-blue-400",
+        bgColor: "bg-blue-500/10"
     },
     {
-        icon: <Code className="w-5 h-5" />,
-        title: "API Reference",
-        description: "Complete API documentation for integrations.",
-        href: "/docs/core/api-reference",
-        color: "text-blue-400"
+        icon: <Code className="w-6 h-6" />,
+        title: "SDK",
+        description: "TypeScript SDK to build plugins for SimpleNS.",
+        href: "/docs/sdk",
+        color: "text-emerald-400",
+        bgColor: "bg-emerald-500/10"
     },
     {
-        icon: <Puzzle className="w-5 h-5" />,
+        icon: <Puzzle className="w-6 h-6" />,
         title: "Plugins",
-        description: "Extend SimpleNS with powerful plugins.",
+        description: "Extend SimpleNS with official and community plugins.",
         href: "/docs/plugins",
-        color: "text-purple-400"
-    },
-    {
-        icon: <Cog className="w-5 h-5" />,
-        title: "Configuration",
-        description: "Environment variables and config options.",
-        href: "/docs/core/configuration",
-        color: "text-amber-400"
-    },
-    {
-        icon: <Download className="w-5 h-5" />,
-        title: "Self-Hosting",
-        description: "Deploy SimpleNS on your own infrastructure.",
-        href: "/docs/core/self-hosting",
-        color: "text-rose-400"
-    },
-    {
-        icon: <Zap className="w-5 h-5" />,
-        title: "Dashboard",
-        description: "Monitor and manage your notifications.",
-        href: "/docs/core/admin-dashboard",
-        color: "text-yellow-400"
+        color: "text-purple-400",
+        bgColor: "bg-purple-500/10"
     }
 ]
 
@@ -105,26 +83,6 @@ export const Header = () => {
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
-
-    const navGroups: NavGroup[] = [
-        {
-            label: "Product",
-            items: [
-                { href: "#features", label: "Features" },
-                { href: "#how-it-works", label: "How It Works" },
-                { href: "#use-cases", label: "Use Cases" },
-            ],
-        },
-        {
-            label: "Resources",
-            items: [
-                { href: "#self-hosting", label: "Self-Hosting" },
-                { href: "#dashboard", label: "Dashboard" },
-                { href: "#why", label: "Why SimpleNS" },
-                { href: "#channels", label: "Multi-Channel" },
-            ],
-        },
-    ]
 
     const directLinks: NavLink[] = [
         { href: "/changelog", label: "Changelog" },
@@ -256,26 +214,24 @@ export const Header = () => {
                                         </Link>
                                     </div>
 
-                                    {/* Menu Items Grid - Right Side */}
-                                    <div className="col-span-8 grid grid-cols-2 gap-4">
+                                    {/* Menu Items Grid - Right Side - 3 Bento Cards */}
+                                    <div className="col-span-8 grid grid-cols-3 gap-4">
                                         {docMenuItems.map((item) => (
                                             <Link
                                                 key={item.title}
                                                 href={item.href}
                                                 onClick={() => setIsDocsOpen(false)}
-                                                className="group flex items-start gap-4 p-4 rounded-xl bg-[#121212] border border-white/5 hover:border-white/10 transition-all"
+                                                className="group flex flex-col p-5 rounded-xl bg-[#121212] border border-white/5 hover:border-white/20 transition-all hover:scale-[1.02]"
                                             >
-                                                <div className={`shrink-0 w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center ${item.color} group-hover:bg-white/10 transition-colors`}>
+                                                <div className={`shrink-0 w-12 h-12 rounded-xl ${item.bgColor} flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform mb-4`}>
                                                     {item.icon}
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="text-white font-medium text-sm group-hover:text-white/90 transition-colors">
-                                                        {item.title}
-                                                    </h4>
-                                                    <p className="text-zinc-500 text-xs mt-1 line-clamp-2">
-                                                        {item.description}
-                                                    </p>
-                                                </div>
+                                                <h4 className="text-white font-semibold text-lg mb-2">
+                                                    {item.title}
+                                                </h4>
+                                                <p className="text-zinc-500 text-sm leading-relaxed">
+                                                    {item.description}
+                                                </p>
                                             </Link>
                                         ))}
                                     </div>
@@ -296,49 +252,50 @@ export const Header = () => {
                         className="fixed inset-0 top-16 z-40 bg-black/80 backdrop-blur-md md:hidden overflow-y-auto"
                     >
                         <div className="flex flex-col p-6">
-                            {/* Accordion Groups */}
-                            {navGroups.map((group) => (
-                                <div key={group.label} className="border-b border-zinc-800">
-                                    <button
-                                        onClick={() =>
-                                            setOpenMobileAccordion(
-                                                openMobileAccordion === group.label ? null : group.label
-                                            )
-                                        }
-                                        className="flex w-full items-center justify-between py-4 text-lg font-medium text-white"
-                                    >
-                                        {group.label}
-                                        <ChevronRight
-                                            className={`h-5 w-5 text-zinc-500 transition-transform ${openMobileAccordion === group.label ? "rotate-90" : ""
-                                                }`}
-                                        />
-                                    </button>
-                                    <AnimatePresence>
-                                        {openMobileAccordion === group.label && (
-                                            <motion.div
-                                                initial={{ height: 0, opacity: 0 }}
-                                                animate={{ height: "auto", opacity: 1 }}
-                                                exit={{ height: 0, opacity: 0 }}
-                                                transition={{ duration: 0.2 }}
-                                                className="overflow-hidden"
-                                            >
-                                                <div className="pb-4 pl-4 space-y-2">
-                                                    {group.items.map((item) => (
-                                                        <Link
-                                                            key={item.href}
-                                                            href={item.href}
-                                                            onClick={() => setIsMenuOpen(false)}
-                                                            className="block py-2 text-zinc-400 hover:text-white transition-colors"
-                                                        >
-                                                            {item.label}
-                                                        </Link>
-                                                    ))}
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-                            ))}
+                            {/* Documentation Accordion */}
+                            <div className="border-b border-zinc-800">
+                                <button
+                                    onClick={() =>
+                                        setOpenMobileAccordion(
+                                            openMobileAccordion === "Documentation" ? null : "Documentation"
+                                        )
+                                    }
+                                    className="flex w-full items-center justify-between py-4 text-lg font-medium text-white"
+                                >
+                                    Documentation
+                                    <ChevronRight
+                                        className={`h-5 w-5 text-zinc-500 transition-transform ${openMobileAccordion === "Documentation" ? "rotate-90" : ""
+                                            }`}
+                                    />
+                                </button>
+                                <AnimatePresence>
+                                    {openMobileAccordion === "Documentation" && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="pb-4 space-y-2">
+                                                {docMenuItems.map((item) => (
+                                                    <Link
+                                                        key={item.href}
+                                                        href={item.href}
+                                                        onClick={() => setIsMenuOpen(false)}
+                                                        className="flex items-center gap-3 py-3 px-4 rounded-xl bg-white/5 text-zinc-300 hover:text-white hover:bg-white/10 transition-colors"
+                                                    >
+                                                        <div className={`w-8 h-8 rounded-lg ${item.bgColor} flex items-center justify-center ${item.color}`}>
+                                                            {item.icon}
+                                                        </div>
+                                                        <span className="font-medium">{item.title}</span>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
 
                             {/* Direct Links */}
                             {directLinks.map((link) => (
@@ -351,15 +308,6 @@ export const Header = () => {
                                     {link.label}
                                 </Link>
                             ))}
-
-                            {/* Docs Link */}
-                            <Link
-                                href="/docs/core"
-                                onClick={() => setIsMenuOpen(false)}
-                                className="py-4 text-lg font-medium text-white border-b border-zinc-800"
-                            >
-                                Documentation
-                            </Link>
 
                             {/* Bottom Actions */}
                             <div className="mt-8 space-y-4">

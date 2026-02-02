@@ -162,7 +162,7 @@ const CompactInstallCard = () => {
             {/* Documentation Link */}
             <div className="mt-3 text-center">
                 <p className="text-sm text-zinc-500">
-                    or read the <a href="/docs/core/self-hosting" className="underline">documentation.</a>
+                    or read the <a href="/docs/core/getting-started" className="underline">documentation.</a>
                 </p>
             </div>
         </div>
