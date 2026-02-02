@@ -1,0 +1,48 @@
+---
+releases:
+  - version: "1.0.0"
+    date: "Feburary 2, 2026"
+    tag: "Latest"
+    description: "The first stable release of SimpleNS - a complete notification infrastructure for modern applications."
+    dockerImages:
+      - "ghcr.io/SimpleNotificationSystem/simplens-core:1.0.0"
+      - "ghcr.io/SimpleNotificationSystem/simplens-dashboard:1.0.0"
+    features:
+      - category: "Core"
+        items:
+          - "Kafka-based processing with retries"
+          - "Scheduled notifications"
+          - "Rate limiting & idempotency"
+          - "Batch notifications"
+      - category: "Plugin System"
+        items:
+          - "Extensible provider plugins"
+          - "@simplens/onboard CLI"
+          - "@simplens/config-gen CLI"
+          - "@simplens/create-simplens-plugin"
+      - category: "Dashboard"
+        items:
+          - "Send & monitor notifications"
+          - "Payload Studio"
+          - "Alerts management"
+      - category: "Infrastructure"
+        items:
+          - "Crash recovery service"
+          - "Horizontal scaling"
+          - "Grafana + Loki logging"
+---
+
+# Changelog
+
+All notable changes to SimpleNS will be documented here. For detailed release notes, visit our [GitHub Releases](https://github.com/SimpleNotificationSystem/simplens-core/releases).
+
+## Release Structure
+
+Each release entry contains:
+- **version**: Semantic version number
+- **date**: Release date  
+- **tag**: Optional label (e.g., "Latest")
+- **description**: Brief summary
+- **dockerImages**: Docker image tags
+- **features**: Grouped feature highlights
+- *bugFixes**: List of bug fxies (optional)
