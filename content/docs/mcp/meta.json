@@ -1,0 +1,9 @@
+{
+    "root": true,
+    "title": "SimpleNS MCP",
+    "pages": [
+        "index",
+        "getting-started",
+        "available-tools-and-resources"
+    ]
+}

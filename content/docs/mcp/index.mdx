@@ -1,0 +1,45 @@
+---
+title: Introduction
+description: The SimpleNS MCP Server exposes the entire notification engine as a set of performant, natural-language-accessible tools for AI assistants.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Brain, Zap, Search, Terminal } from 'lucide-react';
+
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/mcp/index.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/mcp/index.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/mcp/index.mdx"
+  />
+</div>
+
+---
+
+The **SimpleNS MCP Server** connects your favorite AI assistants (Codex, Antigravity, VS Code) directly to your SimpleNS instance. By exposing the core engine as a set of tools, it allows you to send notifications to the recipients using natural language prompts. No individual scripts for varying content fields and schema.
+
+---
+
+## The Core Pain Point Solved
+
+**Problem**: interacting with a complex notification system usually requires context-switching and manual effort:
+
+-   **Schema Guesswork**: "Does the SMS plugin need `phone` or `mobile`?" usually means checking external docs or code. (`list_plugins`)
+-   **Blind Debugging**: "Why did that email fail?" requires digging through dashboard logs or running database queries. (`find_failures`)
+-   **Manual Remediation**: Retrying a batch of failed notifications often involves writing a one-off script or manually updating database records. (`retry_failure`)
+-   **Opaque Health**: Checking if the system is healthy (e.g., ghost deliveries, stuck processing) typically requires a dedicated ops dashboard. (`list_alerts`)
+
+**Solution**: The **SimpleNS MCP Server** exposes the entire notification engine as a set of performant, natural-language-accessible tools.
+
+<Cards>
+  <Card title={<><Brain className="inline w-5 h-5 mr-2" />Get Rid of Individual Scripts</>}>
+    Provide your IDE with a json file or any context and ask the Agent to send emails to them. Simple as that.
+  </Card>
+  <Card title={<><Zap className="inline w-5 h-5 mr-2" /> Instant Action</>}>
+    Tell your AI "Retry all failed SMS from last hour" and it executes the command.
+  </Card>
+  <Card title={<><Search className="inline w-5 h-5 mr-2" /> Schema Discovery</>}>
+    AI can read the exact JSON schema for your current plugins to generate valid payloads instantly.
+  </Card>
+</Cards>

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://simplens.vercel.app';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://simplens.in';
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const lastModified = new Date();

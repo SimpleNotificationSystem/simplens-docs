@@ -5,7 +5,7 @@
 
 The official documentation website for [SimpleNS](https://github.com/SimpleNotificationSystem/simplens-core) - a self-hosted notification orchestration engine.
 
-🌐 **Live Site**: [https://simplens.vercel.app](https://simplens.vercel.app)
+🌐 **Live Site**: [https://simplens.in](https://simplens.in)
 
 ---
 

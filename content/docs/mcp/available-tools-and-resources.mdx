@@ -1,0 +1,35 @@
+---
+title: Available Tools & Resources
+description: Explore the capabilities exposed by the SimpleNS MCP Server.
+---
+
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/mcp/available-tools-and-resources.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/mcp/available-tools-and-resources.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/mcp/available-tools-and-resources.mdx"
+  />
+</div>
+
+---
+
+The MCP server exposes the following capabilities to connected AI clients. Ensure your frontend documentation lists these so users know what they can do.
+
+## Tools (Functions)
+
+| Tool Name | Description |
+| :--- | :--- |
+| **`send_notification`** | Send a single notification via any configured channel (email, sms, etc.). |
+| **`send_batch_notification`** | Send the same content to multiple recipients efficiently. |
+| **`list_plugins`** | Discover installed channels and their required fields (e.g., "Does 'sms' need a 'phone_number' or 'mobile'?"). |
+| **`find_failures`** | Find failed notifications by channel, date range, or search term. Useful for debugging specific issues. |
+| **`retry_failure`** | Re-queue a failed notification for immediate retry. Can be combined with `find_failures` for bulk retries. |
+| **`list_alerts`** | View system-level alerts (ghost deliveries, stuck processing issues). |
+| **`resolve_alert`** | Acknowledge and dismiss system alerts. |
+
+## Resources (Data)
+
+| Resource URI | Description |
+| :--- | :--- |
+| **`simplens://schema/notification`** | The live JSON schema for single notification requests. |
+| **`simplens://schema/batch`** | The live JSON schema for batch requests. |

@@ -1,0 +1,83 @@
+---
+title: Getting Started
+description: Connect your AI tools to SimpleNS MCP Server.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/mcp/getting-started.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/mcp/getting-started.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/mcp/getting-started.mdx"
+  />
+</div>
+
+---
+
+## Credentials Required
+
+To connect, clients need to provide the following headers or environment variables. The server is stateless and verifies these on every request.
+
+| Header Name | Environment Variable (Stdio) | Description |
+| :--- | :--- | :--- |
+| `X-SimpleNS-API-Key` | `NS_API_KEY` | Your SimpleNS secure API Key |
+| `X-SimpleNS-Core-URL` | `SIMPLENS_CORE_URL` | URL of the core engine (e.g. `http://localhost:3000`) |
+| `X-SimpleNS-Dashboard-URL` | `SIMPLENS_DASHBOARD_URL` | URL of the dashboard (e.g. `http://localhost:3002`) |
+
+---
+
+## Connection Configurations
+
+Copy the appropriate configuration for your tool.
+
+<Tabs items={["Codex (Config.toml)", "VS Code", "Antigravity"]}>
+  <Tab value="Codex (Config.toml)">
+    Add this to your `config.toml`:
+
+    ```toml
+    [mcp_servers.simplens]
+    url="http://localhost:3099/mcp"
+    http_headers={ "X-SimpleNS-API-Key"="your simplens api key", "X-SimpleNS-Core-URL"="http://localhost:3000", "X-SimpleNS-Dashboard-URL"="http://localhost:3002"}
+    ```
+  </Tab>
+  <Tab value="VS Code">
+    Add this to your `settings.json`:
+
+    ```json
+    {
+        "servers": {
+            "simplens": {
+                "type":"streamable-http",
+                "url":"http://localhost:3099/mcp",
+                "headers": {
+                    "X-SimpleNS-API-Key":"your simplens api key",
+                    "X-SimpleNS-Core-URL":"http://localhost:3000",
+                    "X-SimpleNS-Dashboard-URL":"http://localhost:3002"
+                }
+            }
+        },
+        "inputs": []
+    }
+    ```
+  </Tab>
+  <Tab value="Antigravity">
+    Add this to your `mcp_config.json`:
+
+    ```json
+    {
+        "mcpServers": {
+            "simplens": {
+                "serverUrl": "http://localhost:3099/mcp",
+                "headers": {
+                    "X-SimpleNS-API-Key": "your simplens api key",
+                    "X-SimpleNS-Core-URL": "http://localhost:3000",
+                    "X-SimpleNS-Dashboard-URL": "http://localhost:3002"
+                }
+            }
+        }
+    }
+    ```
+  </Tab>
+</Tabs>

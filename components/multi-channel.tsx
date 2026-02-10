@@ -242,7 +242,7 @@ export const MultiChannelSection = () => {
                     className="flex flex-col items-center justify-center gap-4 sm:flex-row"
                 >
                     <Button
-                        className="bg-blue-500 hover:bg-blue-600 px-6 py-5 text-base font-medium rounded-xl text-white"
+                        className="bg-white px-6 py-5 text-base font-medium rounded-xl text-black"
                         asChild
                     >
                         <Link href="/docs/plugins#official-plugins">

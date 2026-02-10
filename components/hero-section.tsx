@@ -160,7 +160,7 @@ const CompactInstallCard = () => {
             </div>
 
             {/* Documentation Link */}
-            <div className="mt-3 text-center">
+            <div className="mt-3 text-left px-1 py-1">
                 <p className="text-sm text-zinc-500">
                     or read the <a href="/docs/core/getting-started" className="underline">documentation.</a>
                 </p>

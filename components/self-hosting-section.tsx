@@ -113,7 +113,7 @@ export const SelfHostingSection = () => {
                             transition={{ duration: 0.6, delay: 0.3 }}
                         >
                             <Button
-                                className="bg-white text-black hover:bg-zinc-200 px-6 py-5 sm:px-8 sm:py-6 text-base sm:text-lg font-medium rounded-xl transition-all duration-200 hover:scale-105 group"
+                                className="bg-white text-black hover:bg-zinc-200 px-6 py-5 font-medium rounded-xl transition-all duration-200 hover:scale-105 group"
                                 asChild
                             >
                                 <Link href="/docs/core/self-hosting">

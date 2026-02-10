@@ -86,6 +86,7 @@ export const Header = () => {
 
     const directLinks: NavLink[] = [
         { href: "/changelog", label: "Changelog" },
+        { href: "/mcp", label: "MCP" },
     ]
 
     return (
