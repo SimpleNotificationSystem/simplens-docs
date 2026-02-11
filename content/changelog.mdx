@@ -1,12 +1,43 @@
 ---
 releases:
+  - version: "1.1.0"
+    date: "February 12, 2026"
+    tag: "Latest"
+    description: "Major updates to @simplens/onboard, customizable base path for Dashboard, new Admin Alert Channels (Discord, Telegram), and introduction of SimpleNS MCP."
+    dockerImages:
+      - "ghcr.io/simplenotificationsystem/simplens-core:1.1.0"
+      - "ghcr.io/simplenotificationsystem/simplens-dashboard:1.1.0"
+    features:
+      - category: "Onboard & CLI"
+        items:
+          - "Full command-line control for @simplens/onboard (non-interactive)"
+          - "Image version support in setup"
+          - "Improved TUI with @clack/prompts"
+          - "Nginx template integration with base path support"
+      - category: "Dashboard & Auth"
+        items:
+          - "Runtime BASE_PATH configuration support"
+          - "Custom session-based authentication (replaced next-auth)"
+          - "Dynamic form rendering for provider metadata"
+      - category: "Admin Alert Channels"
+        items:
+          - "New Discord & Telegram alert channels"
+          - "AdminAlertService integration in 24 identified failure points"
+          - "Provider configuration validation"
+          - "Automated fallback to secondary channels"
+      - category: "MCP"
+        items:
+          - "Initial version of SimpleNS Model Context Protocol (MCP) Server"
+    bugFixes:
+      - "Resolved session overflow issue in MCP server"
+      - "Added fallback for Kafka status event production failures"
+
   - version: "1.0.0"
     date: "Feburary 1, 2026"
-    tag: "Latest"
     description: "The first stable release of SimpleNS - a complete notification infrastructure for modern applications."
     dockerImages:
-      - "ghcr.io/SimpleNotificationSystem/simplens-core:1.0.0"
-      - "ghcr.io/SimpleNotificationSystem/simplens-dashboard:1.0.0"
+      - "ghcr.io/simplenotificationsystem/simplens-core:1.0.0"
+      - "ghcr.io/simplenotificationsystem/simplens-dashboard:1.0.0"
     features:
       - category: "Core"
         items:

@@ -23,8 +23,8 @@ To connect, clients need to provide the following headers or environment variabl
 | Header Name | Environment Variable (Stdio) | Description |
 | :--- | :--- | :--- |
 | `X-SimpleNS-API-Key` | `NS_API_KEY` | Your SimpleNS secure API Key |
-| `X-SimpleNS-Core-URL` | `SIMPLENS_CORE_URL` | URL of the core engine (e.g. `http://localhost:3000`) |
-| `X-SimpleNS-Dashboard-URL` | `SIMPLENS_DASHBOARD_URL` | URL of the dashboard (e.g. `http://localhost:3002`) |
+| `X-SimpleNS-Core-URL` | `SIMPLENS_CORE_URL` | Public URL of the core engine (api) |
+| `X-SimpleNS-Dashboard-URL` | `SIMPLENS_DASHBOARD_URL` | Public URL of the dashboard|
 
 ---
 
@@ -38,8 +38,8 @@ Copy the appropriate configuration for your tool.
 
     ```toml
     [mcp_servers.simplens]
-    url="http://localhost:3099/mcp"
-    http_headers={ "X-SimpleNS-API-Key"="your simplens api key", "X-SimpleNS-Core-URL"="http://localhost:3000", "X-SimpleNS-Dashboard-URL"="http://localhost:3002"}
+    url="https://mcp.simplens.in/mcp"
+    http_headers={ "X-SimpleNS-API-Key"="your simplens api key", "X-SimpleNS-Core-URL"="<public_simplens_api_url>", "X-SimpleNS-Dashboard-URL"="<public_simplens_dashboard_url>"}
     ```
   </Tab>
   <Tab value="VS Code">
@@ -50,11 +50,11 @@ Copy the appropriate configuration for your tool.
         "servers": {
             "simplens": {
                 "type":"streamable-http",
-                "url":"http://localhost:3099/mcp",
+                "url":"https://mcp.simplens.in/mcp",
                 "headers": {
                     "X-SimpleNS-API-Key":"your simplens api key",
-                    "X-SimpleNS-Core-URL":"http://localhost:3000",
-                    "X-SimpleNS-Dashboard-URL":"http://localhost:3002"
+                    "X-SimpleNS-Core-URL":"<public_simplens_api_url>",
+                    "X-SimpleNS-Dashboard-URL":"<public_simplens_dashboard_url>"
                 }
             }
         },
@@ -69,11 +69,11 @@ Copy the appropriate configuration for your tool.
     {
         "mcpServers": {
             "simplens": {
-                "serverUrl": "http://localhost:3099/mcp",
+                "serverUrl": "https://mcp.simplens.in/mcp",
                 "headers": {
                     "X-SimpleNS-API-Key": "your simplens api key",
-                    "X-SimpleNS-Core-URL": "http://localhost:3000",
-                    "X-SimpleNS-Dashboard-URL": "http://localhost:3002"
+                    "X-SimpleNS-Core-URL": "<public_simplens_api_url>",
+                    "X-SimpleNS-Dashboard-URL": "<public_simplens_dashboard_url>"
                 }
             }
         }
