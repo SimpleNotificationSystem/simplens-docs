@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { Github, Menu, X, ChevronDown, ChevronRight, Star, BookOpen, Code, Puzzle } from "lucide-react"
+import { Github, Menu, X, ChevronDown, ChevronRight, Star, BookOpen, Code, Puzzle, Plug } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -45,6 +45,14 @@ const docMenuItems: DocMenuItem[] = [
         href: "/docs/plugins",
         color: "text-purple-400",
         bgColor: "bg-purple-500/10"
+    },
+    {
+        icon: <Plug className="w-6 h-6" />,
+        title: "MCP",
+        description: "Talk to your SimpleNS using MCP",
+        href: "/docs/mcp",
+        color: "text-blue-400",
+        bgColor: "bg-blue-500/10"
     }
 ]
 
@@ -215,8 +223,8 @@ export const Header = () => {
                                         </Link>
                                     </div>
 
-                                    {/* Menu Items Grid - Right Side - 3 Bento Cards */}
-                                    <div className="col-span-8 grid grid-cols-3 gap-4">
+                                    {/* Menu Items Grid - Right Side - Bento Grid */}
+                                    <div className="col-span-8 grid grid-cols-2 gap-4">
                                         {docMenuItems.map((item) => (
                                             <Link
                                                 key={item.title}

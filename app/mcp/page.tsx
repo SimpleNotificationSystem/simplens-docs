@@ -78,7 +78,7 @@ export default function MCPPage() {
                             variants={heroVariants}
                         >
                             Talk to your <br />
-                            <span className="bg-linear-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
+                            <span className="bg-linear-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
                                 Notification System
                             </span>
                         </motion.h1>
@@ -96,17 +96,17 @@ export default function MCPPage() {
                         >
                             <Link
                                 href="/docs/mcp"
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-xl font-medium transition-all hover:scale-105"
+                                className="inline-flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-3 bg-white text-black rounded-xl font-medium transition-all hover:scale-105"
                             >
                                 Get Started
                                 <ArrowRight className="w-4 h-4" />
                             </Link>
                             <Link
                                 href="/docs/mcp/available-tools-and-resources"
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium transition-all"
+                                className="inline-flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium transition-all"
                             >
                                 <Hammer className="w-4 h-4" />
-                                View Tools
+                                View Tools & Resources
                             </Link>
                         </motion.div>
                     </motion.div>
