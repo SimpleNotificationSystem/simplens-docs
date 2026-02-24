@@ -1,8 +1,51 @@
 ---
 releases:
+  - version: "1.2.0"
+    date: "February 24, 2026"
+    tag: "Latest"
+    description: "Notification templates with Monaco editor, dashboard navigation tour, glassmorphism UI enhancements, Bruno API docs, and comprehensive testing improvements."
+    dockerImages:
+      - "ghcr.io/simplenotificationsystem/simplens-core:1.2.0"
+      - "ghcr.io/simplenotificationsystem/simplens-dashboard:1.2.0"
+    features:
+      - category: "Template Management"
+        items:
+          - "Template editor with Monaco editor integration"
+          - "Frontend for template management"
+          - "API routes for template-based notifications"
+          - "Template creation and usage implementation"
+          - "Optional template_id support in API"
+      - category: "Dashboard"
+        items:
+          - "Interactive navigation tour"
+          - "Floating sidebar"
+          - "Glassmorphism effect layer"
+          - "Page animations"
+          - "Updated sidebar UI"
+      - category: "Onboard & CLI"
+        items:
+          - "Version prompting in normal mode"
+      - category: "Testing & Documentation"
+        items:
+          - "Comprehensive test suite additions"
+          - "Bruno API documentation"
+          - "Improved code formatting and readability"
+      - category: "Core Improvements"
+        items:
+          - "Timeout handling in unified consumer"
+          - "Immediate throttle map updates in admin-alert-service"
+          - "ESLint integration with pre-push hooks"
+          - "Optimized database query performance"
+    bugFixes:
+      - "Fixed dashboard build error and navigation in restart tour"
+      - "Resolved Monaco editor loading issues"
+      - "Fixed type error in schema failure handler"
+      - "Resolved lint issues in dashboard"
+      - "Fixed Bruno API docs for easier environment loading"
+      - "Fixed notification template issues in API"
+
   - version: "1.1.0"
     date: "February 12, 2026"
-    tag: "Latest"
     description: "Major updates to @simplens/onboard, customizable base path for Dashboard, new Admin Alert Channels (Discord, Telegram), and introduction of SimpleNS MCP."
     dockerImages:
       - "ghcr.io/simplenotificationsystem/simplens-core:1.1.0"
