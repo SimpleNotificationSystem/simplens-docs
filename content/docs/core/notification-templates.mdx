@@ -1,0 +1,314 @@
+---
+title: Notification Templates
+description: Create reusable notification templates with dynamic variables and provider-specific content schemas.
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/core/notification-templates.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/core/notification-templates.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/core/notification-templates.mdx"
+  />
+</div>
+
+---
+
+## Overview
+
+Notification Templates let you define reusable message structures that can be referenced by `template_id` when sending notifications. Instead of passing the full `content` payload every time, you create a template once and reference it — keeping your notification requests clean and your content centralized.
+
+Templates are **provider-specific** — each template is tied to a `package` (e.g., `@simplens/nodemailer-gmail`, `@simplens/resend`) and its content is validated against that provider's content schema.
+
+---
+
+## Template Schema
+
+<TypeTable
+  type={{
+    name: {
+      description: 'Human-readable name for the template.',
+      type: 'string',
+      required: true
+    },
+    template_id: {
+      description: 'Unique identifier used to reference the template.',
+      type: 'string',
+      required: true
+    },
+    description: {
+      description: "Optional description of the template's purpose.",
+      type: 'string',
+    },
+    content: {
+      description: 'Provider-specific content payload (e.g., subject, message for email).',
+      type: 'object',
+      required: true
+    },
+    package: {
+      description: 'The provider package this template belongs to.',
+      type: 'string',
+      required: true
+    }
+  }}
+/>
+
+---
+
+## Dynamic Variables
+
+Templates support dynamic variables using the `{{variableName}}` syntax. When a notification is sent, variables are interpolated from the `variables` field in the notification request.
+
+SimpleNS automatically normalizes alternative variable syntaxes to the standard `{{variableName}}` format:
+
+| Input Syntax | Normalized To |
+|---|---|
+| `${name}` | `{{name}}` |
+| `{ name }` | `{{name}}` |
+| `{{ name }}` | `{{name}}` |
+
+### Example Template Content
+
+```json
+{
+  "subject": "Welcome, {{username}}!",
+  "message": "Hello {{username}}, your account has been created on {{date}}."
+}
+```
+
+When sending a notification with this template, pass the variables:
+
+```json
+{
+  "variables": {
+    "username": "John",
+    "date": "2026-02-25"
+  }
+}
+```
+
+---
+
+## API Reference
+
+All template endpoints are mounted at `/api/templates` and require authentication via the `auth_middleware`.
+
+### Create Template
+
+`POST /api/templates/create`
+
+#### Request Body
+
+```json title="Request"
+{
+  "name": "Welcome Email",
+  "template_id": "welcome-email-v1",
+  "description": "Sent to new users upon registration",
+  "content": {
+    "subject": "Welcome to {{appName}}!",
+    "message": "Hi {{username}}, thanks for signing up."
+  },
+  "package": "@simplens/nodemailer-gmail"
+}
+```
+
+#### Responses
+
+| Status | Description |
+|---|---|
+| `201` | Template created successfully |
+| `400` | Validation error, invalid package, invalid content schema, or duplicate `template_id` |
+| `500` | Internal server error |
+
+<Callout type="info">
+The `content` object is validated against the provider's content schema. If the package doesn't exist in your SimpleNS instance or the content doesn't match the expected schema, the request will be rejected.
+</Callout>
+
+---
+
+### Get All Templates
+
+`GET /api/templates`
+
+#### Query Parameters
+
+<TypeTable
+  type={{
+    package_name: {
+      description: 'Filter templates by provider package.',
+      type: 'string',
+    }
+  }}
+/>
+
+#### Example
+
+```http
+GET /api/templates?package_name=@simplens/nodemailer-gmail
+```
+
+#### Response (200)
+
+```json
+[
+  {
+    "name": "Welcome Email",
+    "description": "Sent to new users upon registration",
+    "template_id": "welcome-email-v1",
+    "package": "@simplens/nodemailer-gmail",
+    "created_at": "2026-02-25T07:00:00.000Z"
+  }
+]
+```
+
+<Callout type="info">
+The list endpoint returns template metadata only — the `content` field is omitted. Use the **Get by ID** endpoint to retrieve full template content.
+</Callout>
+
+---
+
+### Get Template by ID
+
+`GET /api/templates/:template_id`
+
+#### Response (200)
+
+```json
+{
+  "name": "Welcome Email",
+  "description": "Sent to new users upon registration",
+  "template_id": "welcome-email-v1",
+  "package": "@simplens/nodemailer-gmail",
+  "content": {
+    "subject": "Welcome to {{appName}}!",
+    "message": "Hi {{username}}, thanks for signing up."
+  }
+}
+```
+
+| Status | Description |
+|---|---|
+| `200` | Template found |
+| `400` | Missing `template_id` |
+| `404` | No template found for the given ID |
+
+---
+
+### Update Template
+
+`PUT /api/templates/:template_id`
+
+#### Request Body
+
+```json title="Request"
+{
+  "name": "Welcome Email v2",
+  "description": "Updated welcome email",
+  "content": {
+    "subject": "Welcome aboard, {{username}}!",
+    "message": "Hi {{username}}, welcome to {{appName}}."
+  },
+  "package": "@simplens/nodemailer-gmail"
+}
+```
+
+<Callout type="warn">
+The `template_id` cannot be changed during an update — it is used as the lookup key.
+</Callout>
+
+| Status | Description |
+|---|---|
+| `200` | Template updated successfully |
+| `400` | Validation error or invalid content schema |
+| `404` | No template found for the given ID |
+
+---
+
+### Delete Template
+
+`DELETE /api/templates/:template_id`
+
+| Status | Description |
+|---|---|
+| `200` | Template deleted successfully |
+| `400` | Missing `template_id` |
+| `404` | No template found for the given ID |
+
+---
+
+## Using Templates in Notification Requests
+
+Instead of providing `content` directly, you can reference templates by their `template_id` in both single and batch notification requests.
+
+### Single Notification with Template
+
+```json title="Request"
+{
+  "request_id": "550e8400-e29b-41d4-a716-446655440000",
+  "client_id": "550e8400-e29b-41d4-a716-446655440001",
+  "channel": ["email"],
+  "template_id": ["welcome-email-v1"],
+  "recipient": {
+    "email": "user@example.com"
+  },
+  "variables": {
+    "username": "John",
+    "appName": "MyApp"
+  },
+  "webhook_url": "https://example.com/webhook"
+}
+```
+
+### Mixing Templates and Inline Content
+
+The `template_id` and `channel` arrays are position-mapped. You can mix templates with inline content by leaving a `template_id` entry as `null` for channels that should use inline content instead:
+
+```json title="Mixed Example"
+{
+  "channel": ["email", "sms"],
+  "template_id": ["welcome-email-v1", null],
+  "content": {
+    "sms": {
+      "message": "Welcome, {{username}}!"
+    }
+  }
+}
+```
+
+In this example:
+- **`email`** channel uses the `welcome-email-v1` template
+- **`sms`** channel uses the inline `content.sms` payload
+
+### Batch Notifications with Templates
+
+Templates work identically in batch requests. Each recipient can provide their own `variables` for personalization:
+
+```json title="Batch Request"
+{
+  "client_id": "550e8400-e29b-41d4-a716-446655440001",
+  "channel": ["email"],
+  "template_id": ["welcome-email-v1"],
+  "recipients": [
+    {
+      "request_id": "...",
+      "user_id": "user1",
+      "email": "user1@example.com",
+      "variables": { "username": "Alice" }
+    },
+    {
+      "request_id": "...",
+      "user_id": "user2",
+      "email": "user2@example.com",
+      "variables": { "username": "Bob" }
+    }
+  ],
+  "webhook_url": "https://example.com/webhook"
+}
+```
+
+<Callout type="info">
+Either `template_id` or `content` must be present in every notification request. If neither is provided, the request will be rejected with a validation error.
+</Callout>

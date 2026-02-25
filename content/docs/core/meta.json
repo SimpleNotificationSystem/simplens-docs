@@ -8,7 +8,9 @@
     "architecture",
     "core-concepts",
     "api-reference",
+    "notification-templates",
     "admin-dashboard",
+    "admin-alert-channels",
     "configuration",
     "troubleshooting"
   ]

@@ -81,10 +81,13 @@ Send a notification to one or more channels for a single recipient context.
       type: 'Record<string, unknown>',
       required: true
     },
+    template_id: {
+      description: 'Array of template IDs, position-mapped to channels. Use null for channels using inline content.',
+      type: 'string[]'
+    },
     content: {
-      description: 'Key-value map of channel content.',
+      description: 'Key-value map of channel content. Required if template_id is not provided.',
       type: 'Record<string, unknown>',
-      required: true
     },
     variables: {
       description: 'Variables for template substitution.',
@@ -99,6 +102,10 @@ Send a notification to one or more channels for a single recipient context.
 
 <Callout type="info">
 **Schema Variations**: The `recipient` and `content` field schemas vary depending on the notification provider plugin you're using. To get the exact schema for your installed providers, use the **Payload Studio** section in the Admin Dashboard. Refer the [Admin Dashboard Guide](./admin-dashboard#payload-studio)
+</Callout>
+
+<Callout type="info">
+Either `template_id` or `content` must be present. You can also mix both — see [Notification Templates](./notification-templates#using-templates-in-notification-requests) for details.
 </Callout>
 
 
@@ -169,10 +176,13 @@ Broadcast a notification to multiple recipients efficiently.
       type: 'string[]',
       required: true
     },
+    template_id: {
+      description: 'Array of template IDs, position-mapped to channels. Use null for channels using inline content.',
+      type: 'string[]'
+    },
     content: {
-      description: 'Content shared across all recipients.',
+      description: 'Content shared across all recipients. Required if template_id is not provided.',
       type: 'Record<string, unknown>',
-      required: true
     },
     recipients: {
       description: 'Array of recipient objects. Each object must contain `request_id`, `user_id`, and any channel-specific fields (e.g., `email`).',
