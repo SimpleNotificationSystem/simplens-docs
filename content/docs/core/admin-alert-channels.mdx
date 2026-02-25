@@ -416,19 +416,20 @@ Don't forget to add your new channel type to the `ADMIN_CHANNEL_TYPE` array in `
 ---
 
 ## Architecture
-
-```mermaid
-graph TD
-    A["SimpleNS Core Services"] -->|"sendAlert()"| B["AdminAlertService"]
-    B --> C{"Throttle Check"}
-    C -->|"Throttled"| D["Silent Drop"]
-    C -->|"Passed"| E["Query Enabled Channels"]
-    E --> F["Decrypt Configs"]
-    F --> G["Channel Registry"]
-    G --> H["Discord Provider"]
-    G --> I["Telegram Provider"]
-    G --> J["Custom Provider"]
-    H --> K["Discord Webhook API"]
-    I --> L["Telegram Bot API"]
-    J --> M["Custom API"]
-```
+<Mermaid
+  chart={`
+    graph TD
+        A["SimpleNS Core Services"] -->|"sendAlert()"| B["AdminAlertService"]
+        B --> C{"Throttle Check"}
+        C -->|"Throttled"| D["Silent Drop"]
+        C -->|"Passed"| E["Query Enabled Channels"]
+        E --> F["Decrypt Configs"]
+        F --> G["Channel Registry"]
+        G --> H["Discord Provider"]
+        G --> I["Telegram Provider"]
+        G --> J["Custom Provider"]
+        H --> K["Discord Webhook API"]
+        I --> L["Telegram Bot API"]
+        J --> M["Custom API"]
+  `}
+/>
