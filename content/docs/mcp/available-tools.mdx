@@ -1,0 +1,29 @@
+---
+title: Available Tools
+description: Explore the capabilities exposed by the SimpleNS MCP Server.
+---
+
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/mcp/available-tools.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/mcp/available-tools.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/mcp/available-tools.mdx"
+  />
+</div>
+
+---
+
+The MCP server exposes the following capabilities to connected AI clients. Ensure your frontend documentation lists these so users know what they can do.
+
+## Tools (Functions)
+
+| Tool Name | Description |
+| :--- | :--- |
+| **`send_notification`** | Send a single notification via any configured channel. Supports templates and inline content. |
+| **`send_batch_notification`** | Send batch notifications to multiple recipients. Supports templates and inline content. |
+| **`get_send_schema`** | Get the full request schema with examples — call this before sending if unsure about the format. |
+| **`list_plugins`** | List installed plugins, channels, and their schemas. |
+| **`find_failures`** | Find failed notifications with filters (channel, date range, search term). Useful for debugging specific issues. |
+| **`retry_failure`** | Retry a specific failed notification by ID. Can be combined with `find_failures` for bulk retries. |
+| **`list_alerts`** | List unresolved system alerts (ghost delivery, stuck processing). |
+| **`resolve_alert`** | Dismiss a specific system alert. |

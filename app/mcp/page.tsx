@@ -102,11 +102,11 @@ export default function MCPPage() {
                                 <ArrowRight className="w-4 h-4" />
                             </Link>
                             <Link
-                                href="/docs/mcp/available-tools-and-resources"
+                                href="/docs/mcp/available-tools"
                                 className="inline-flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium transition-all"
                             >
                                 <Hammer className="w-4 h-4" />
-                                View Tools & Resources
+                                View Tools
                             </Link>
                         </motion.div>
                     </motion.div>

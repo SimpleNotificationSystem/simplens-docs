@@ -16,6 +16,18 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 ---
 
+## Overview
+
+The SimpleNS MCP Server implements the Model Context Protocol, allowing AI assistants like Claude Desktop, Cursor, and others to interact with your SimpleNS instance to send notifications, check analytics, and manage alerts.
+
+**Supported Transports:**
+- **Streamable HTTP** — Local usage via npm package
+- **Stdio** — Local usage via command line / npm package
+
+No installation is required when using `npx`.
+
+---
+
 ## Credentials Required
 
 To connect, clients need to provide the following headers or environment variables. The server is stateless and verifies these on every request.
@@ -32,29 +44,43 @@ To connect, clients need to provide the following headers or environment variabl
 
 Copy the appropriate configuration for your tool.
 
-<Tabs items={["Codex (Config.toml)", "VS Code", "Antigravity"]}>
-  <Tab value="Codex (Config.toml)">
-    Add this to your `config.toml`:
-
-    ```toml
-    [mcp_servers.simplens]
-    url="https://mcp.simplens.in/mcp"
-    http_headers={ "X-SimpleNS-API-Key"="your simplens api key", "X-SimpleNS-Core-URL"="<public_simplens_api_url>", "X-SimpleNS-Dashboard-URL"="<public_simplens_dashboard_url>"}
-    ```
-  </Tab>
+<Tabs items={["VS Code", "Antigravity", "Codex"]}>
   <Tab value="VS Code">
+    ### Streamable HTTP
+
+    Start the server locally with `npx -y @simplens/mcp` (defaults to port `3001`), then add this to your `settings.json`:
+
+    ```json
+    {
+        "servers": {
+            "simplens": {
+                "type": "streamable-http",
+                "url": "http://localhost:3001/mcp",
+                "headers": {
+                    "X-SimpleNS-API-Key": "your-ns-api-key",
+                    "X-SimpleNS-Core-URL": "http://localhost:3000",
+                    "X-SimpleNS-Dashboard-URL": "http://localhost:3002"
+                }
+            }
+        },
+        "inputs": []
+    }
+    ```
+
+    ### Stdio
+
     Add this to your `settings.json`:
 
     ```json
     {
         "servers": {
             "simplens": {
-                "type":"streamable-http",
-                "url":"https://mcp.simplens.in/mcp",
-                "headers": {
-                    "X-SimpleNS-API-Key":"your simplens api key",
-                    "X-SimpleNS-Core-URL":"<public_simplens_api_url>",
-                    "X-SimpleNS-Dashboard-URL":"<public_simplens_dashboard_url>"
+                "command": "npx",
+                "args": ["-y", "@simplens/mcp", "--stdio"],
+                "env": {
+                    "NS_API_KEY": "your-local-api-key",
+                    "SIMPLENS_CORE_URL": "http://localhost:3000",
+                    "SIMPLENS_DASHBOARD_URL": "http://localhost:3002"
                 }
             }
         },
@@ -63,21 +89,69 @@ Copy the appropriate configuration for your tool.
     ```
   </Tab>
   <Tab value="Antigravity">
+    ### Streamable HTTP
+
+    Start the server locally with `npx -y @simplens/mcp` (defaults to port `3001`), then add this to your `mcp_config.json`:
+
+    ```json
+    {
+        "mcpServers": {
+            "simplens": {
+                "serverUrl": "http://localhost:3001/mcp",
+                "headers": {
+                    "X-SimpleNS-API-Key": "your-ns-api-key",
+                    "X-SimpleNS-Core-URL": "http://localhost:3000",
+                    "X-SimpleNS-Dashboard-URL": "http://localhost:3002"
+                }
+            }
+        }
+    }
+    ```
+
+    ### Stdio
+
     Add this to your `mcp_config.json`:
 
     ```json
     {
         "mcpServers": {
             "simplens": {
-                "serverUrl": "https://mcp.simplens.in/mcp",
-                "headers": {
-                    "X-SimpleNS-API-Key": "your simplens api key",
-                    "X-SimpleNS-Core-URL": "<public_simplens_api_url>",
-                    "X-SimpleNS-Dashboard-URL": "<public_simplens_dashboard_url>"
+                "command": "npx",
+                "args": ["-y", "@simplens/mcp", "--stdio"],
+                "env": {
+                    "NS_API_KEY": "your-local-api-key",
+                    "SIMPLENS_CORE_URL": "http://localhost:3000",
+                    "SIMPLENS_DASHBOARD_URL": "http://localhost:3002"
                 }
             }
         }
     }
+    ```
+  </Tab>
+  <Tab value="Codex">
+    ### Streamable HTTP
+
+    Start the server locally with `npx -y @simplens/mcp` (defaults to port `3001`), then add this to your `config.toml`:
+
+    ```toml
+    [mcp_servers.simplens]
+    url = "http://localhost:3001/mcp"
+    http_headers = { "X-SimpleNS-API-Key" = "your-ns-api-key", "X-SimpleNS-Core-URL" = "http://localhost:3000", "X-SimpleNS-Dashboard-URL" = "http://localhost:3002" }
+    ```
+
+    ### Stdio
+
+    Add this to your `config.toml`:
+
+    ```toml
+    [mcp_servers.simplens]
+    command = "npx"
+    args = ["-y", "@simplens/mcp", "--stdio"]
+
+    [mcp_servers.simplens.env]
+    NS_API_KEY = "your-local-api-key"
+    SIMPLENS_CORE_URL = "http://localhost:3000"
+    SIMPLENS_DASHBOARD_URL = "http://localhost:3002"
     ```
   </Tab>
 </Tabs>
