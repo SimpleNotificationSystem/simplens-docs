@@ -371,14 +371,14 @@ export const FeaturesSection = () => {
             size: "large" as const,
         },
         {
-            title: "Never Lose a Message",
-            description: "Recovery service detects orphaned notifications from crashes and automatically reschedules them.",
+            title: "Automatic Failover",
+            description: "Switch traffic instantly when a primary provider is down. Includes recovery for orphaned notifications.",
             visual: <ShieldVisual />,
             size: "large" as const,
         },
         {
-            title: "Exponential Backoff Retries",
-            description: "Automatic retry with increasing delays ensures your notifications get delivered.",
+            title: "Retries & Dead-letters",
+            description: "Backoff strategies for transient failures ensure your notifications eventually get delivered.",
             visual: <RetryVisual />,
             size: "default" as const,
         },

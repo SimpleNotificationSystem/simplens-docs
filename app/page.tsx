@@ -1,6 +1,7 @@
 "use client"
 import { Header } from "@/components/header";
 import { HeroSection } from "@/components/hero-section";
+import { WhoIsThisForSection } from "@/components/who-is-this-for";
 import { FeaturesSection } from "@/components/features-section";
 import { HowItWorksSection } from "@/components/how-it-works";
 import { MultiChannelSection } from "@/components/multi-channel";
@@ -22,6 +23,7 @@ export default function Home() {
       <div className="relative z-10">
         <Header />
         <HeroSection />
+        <WhoIsThisForSection />
         <FeaturesSection />
         <SelfHostingSection />
         <HowItWorksSection />
