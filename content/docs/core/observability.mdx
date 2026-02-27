@@ -1,0 +1,63 @@
+---
+title: Observability
+description: Monitor SimpleNS with metrics, logs, and traces.
+---
+import { Callout } from 'fumadocs-ui/components/callout';
+
+<div className="flex gap-2 mb-4">
+  <LLMCopyButton markdownUrl="/docs/core/observability.mdx" />
+  <ViewOptions 
+    markdownUrl="/docs/core/observability.mdx"
+    githubUrl="https://github.com/SimpleNotificationSystem/simplens-docs/blob/main/content/docs/core/observability.mdx"
+  />
+</div>
+
+---
+
+SimpleNS is built with operational visibility deeply integrated into its core. The infrastructure bundle provides a complete observing stack using **Loki** for logs, **Prometheus** (coming soon) for metrics, and **Grafana** for visualization.
+## Centralized Logging (Loki)
+All SimpleNS services (API, workers, processors) use the Winston logger configured to push JSON-formatted logs directly to Loki via the `winston-loki` transport.
+### Log Format
+Logs are structured with consistent metadata to make querying in Grafana simple:
+```json
+{
+  "level": "info",
+  "message": "Notification generated successfully",
+  "service": "api-server",
+  "timestamp": "2024-03-24T12:00:00.000Z",
+  "notificationId": "550e8400-e29b-41d4-a716-446655440000",
+  "requestId": "req_12345",
+  "channel": "email"
+}
+```
+
+### Useful LogQL Queries
+
+When troubleshooting in the Grafana Explore tab (`http://localhost:3001`), try these queries:
+
+**Find all logs for a specific notification:**
+```text
+{service=~".*"} |= "550e8400-e29b-41d4-a716-446655440000"
+```
+
+**Find all provider errors in the last hour:**
+```text
+{service="unified-processor", level="error"} | json | error != ""
+```
+
+**Track the lifecycle of a request:**
+```text
+{service=~"api-server|background-worker|unified-processor"} |= "req_12345"
+```
+
+## Grafana Dashboards
+
+The infrastructure deployment `docker-compose.infra.yaml` spins up Grafana on port 3001. It is pre-configured to automatically connect to the Loki datasource.
+
+### Dashboard Configuration
+
+Currently, you will need to create your panels manually, but official dashboards are planned for future releases. Here are key metrics you should visualize:
+
+1. **Throughput**: Count of `{service="api-server"} |= "Accepted"` over time.
+2. **Error Rate**: Ratio of `{level="error"}` logs to `{level="info"}` logs originating from the `unified-processor` service.
+3. **Queue Build-up**: Monitor the depth of the MongoDB `outbox` collection and Kafka topics using your preferred DB exporters.

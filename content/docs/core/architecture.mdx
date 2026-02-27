@@ -26,13 +26,17 @@ import { Target, Plug, TrendingUp, Shield, Leaf, MessageSquare, Database, BarCha
 
 SimpleNS follows an event-driven, microservices-inspired architecture where each component has a specific responsibility. The system is built around the **outbox pattern** for reliability and uses **Kafka** for event streaming.
 
-<Callout type="info" title="Deployment Architecture">
-SimpleNS uses **split Docker Compose files** for flexible deployment:
-- `docker-compose.yaml` - Application services (uses pre-built images from GHCR)
-- `docker-compose.infra.yaml` - Infrastructure services (MongoDB, Kafka, Redis, Loki)
-- `docker-compose.dev.yaml` - All-in-one development environment
+### What runs where?
 
-See the [Self-Hosting Guide](/docs/core/self-hosting) for deployment options.
+SimpleNS is split into two logical halves to make deployment flexible.
+
+| Concept | Docker Compose File | Services Included | Purpose |
+|---------|---------------------|-------------------|---------|
+| **Application** | `docker-compose.yaml` | `api`, `worker`, `processor`, `recovery`, `dashboard` | The Node.js services that make up the SimpleNS logic. These are stateless (except for recovery) and can be scaled horizontally. |
+| **Infrastructure** | `docker-compose.infra.yaml`| `mongodb`, `redis`, `kafka`, `zookeeper`, `loki`, `grafana` | The stateful databases and event buses. You can self-host these or use managed cloud equivalents (e.g., MongoDB Atlas, AWS MSK, ElastiCache). |
+
+<Callout type="info" title="All-in-one Deployment">
+For local development or simple single-machine deployments, `docker-compose.dev.yaml` combines both Application and Infrastructure into one file.
 </Callout>
 
 ### Core Principles

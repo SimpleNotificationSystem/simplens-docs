@@ -27,9 +27,15 @@ Before you begin, ensure you have the following installed:
 
 ---
 
-## Quick Start
+## 5-Minute Quickstart
 
-Get SimpleNS running on your machine (local or remote) in under a minute with a single command.
+Get SimpleNS running on your machine and send your first notification in under 5 minutes.
+
+<Steps>
+
+### Step 1: Install & Start
+
+Run this command in your terminal to start the `@simplens/onboard` cli tool
 
 <Tabs items={['Linux', 'Windows', 'npm']}>
   <Tab value="Linux">
@@ -75,17 +81,16 @@ Get SimpleNS running on your machine (local or remote) in under a minute with a 
   </Tab>
 </Tabs>
 
-The installer will automatically:
-- Pull the required Docker images
-- Configure your environment
-- Set up the plugin configuration
-- Start all SimpleNS services
+The installer will create the following files:
+  - `docker-compose.yaml`: Contains the application services
+  - `docker-compose.infra.yaml`: Contains the infrastructure services like `mongo`, `kafka`, `redis`, `loki` and `grafana`. (These services are customizable in the `@simplens/onboard` tool. `docker-compose.infra.yaml` file is optional as it will not be created if you don't want any infra services to run.)
+  - `.env`: Contains the environmental variables
+  - `simplens.config.yaml`: Contains the configurations for simplens plugins
+  - `nginx.conf`: An optional nginx configuration file if `BASE_PATH` is enabled and configured in the `@simplens/onboard` cli tool
 
-<Steps>
+### Step 2: Verify Health
 
-### Verify Installation
-
-Once the installation completes, check that the API server is running:
+Ensure the core API server is running and healthy:
 
 ```bash
 curl http://localhost:3000/health
@@ -99,22 +104,11 @@ Expected response:
 }
 ```
 
-### Send Your First Notification
+### Step 3: Send Your First Notification
 
-<Tabs items={['Dashboard', 'cURL']}>
-  <Tab value="Dashboard">
-    Using the dashboard (recommended for first-time users):
+We'll use the built-in `mock` channel, which requires no external provider credentials, just to test the flow.
 
-    1. Open [http://localhost:3002](http://localhost:3002)
-    2. Login with:
-       - Username: `admin`
-       - Password: `<your-password-from-env>`
-    3. Navigate to **Send**
-    4. Select channel: Select available channel and provider (channels and providers can be configured in `simplens.config.yaml` file)
-    5. Fill in the required (*) fields
-    6. Click "Send Notification"
-  </Tab>
-  
+<Tabs items={['cURL', 'Node.js']}>
   <Tab value="cURL">
     ```bash
     curl -X POST http://localhost:3000/api/notification \
@@ -134,27 +128,42 @@ Expected response:
         }
       }'
     ```
-
-    Expected response (202 Accepted):
-    ```json
-    {
-       "message": "Notifications are being processed"
-    }
+  </Tab>
+  <Tab value="Node.js">
+    ```javascript
+    const response = await fetch('http://localhost:3000/api/notification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer <YOUR-NS-API-KEY>'
+      },
+      body: JSON.stringify({
+        request_id: crypto.randomUUID(),
+        client_id: "55283667-1f58-467d-86a1-47f7f0e059f2",
+        channel: ["mock"],
+        recipient: { user_id: "user123" },
+        content: { mock: { message: "Hello from SimpleNS!" } }
+      })
+    });
     ```
-
-    <Callout>
-    As each provider's recipient and content schemas can vary, you can get the schema from Payload Studio section in the admin dashboard. See the [Admin Dashboard Guide](./admin-dashboard)
-    </Callout>
   </Tab>
 </Tabs>
 
-### Check Notification Status
+Expected response (202 Accepted):
+```json
+{
+   "message": "Notifications are being processed"
+}
+```
 
-View your notification in the dashboard:
+### Step 4: Check Dashboard
 
-1. Go to **Events** page
-2. Search for your notification by ID
-3. Check status: `pending` → `processing` → `delivered`
+Open your browser to the Admin Dashboard (default: `http://localhost:3002`).
+Login with username `admin` and check the **Events** page to search for your notification by ID.
+
+<Callout type="note" title="Congratulations! 🎉">
+You've successfully deployed SimpleNS and sent your first notification.
+</Callout>
 
 </Steps>
 
@@ -162,92 +171,16 @@ View your notification in the dashboard:
 
 ## Next Steps
 
-<Callout type="note" title="Congratulations! 🎉">
-You've successfully sent your first notification through SimpleNS.
-</Callout>
-
-### Add More Plugins
-
-```bash
-# Add Gmail email provider
-npx @simplens/config-gen generate @simplens/nodemailer-gmail -c simplens.config.yaml
-
-# List available plugins
-npx @simplens/config-gen list --official
-```
-
-### Build Your Own Plugin
-
-Use the CLI tool to scaffold a new plugin:
-
-```bash
-npx @simplens/create-simplens-plugin
-```
-
-See [Plugin Development Guide](../sdk/building-plugin) for details.
-
----
-
-## Troubleshooting
-
-### Services won't start
-
-**Check logs:**
-```bash
-docker compose -f docker-compose.dev.yaml logs <service-name>
-```
-
-<Callout type="warn" title="Common issues">
-- Ports already in use (3000, 3002, 27017, 9092, 6379)
-- MongoDB replica set initialization - wait 60s and check again
-- Missing `.env` file
-</Callout>
-
-### Notification stuck in pending
-
-**Possible causes:**
-- Worker not running: `docker compose -f docker-compose.dev.yaml ps worker`
-- Processor not running: `docker compose -f docker-compose.dev.yaml ps notification_processor`
-- Kafka connection issues: Check Kafka UI at http://localhost:8080
-
-### Plugin not loading
-
-**Check:**
-1. Config exists: `cat simplens.config.yaml`
-2. Environment variables set in `.env`
-3. Restart processor: `docker compose -f docker-compose.dev.yaml restart notification_processor`
-
-<Callout type="info">
-For more issues, see [Troubleshooting Guide](./troubleshooting).
-</Callout>
-
----
-
-## Accessing Services
-
-Once running, you can access:
+Now that you have the core system running, explore adding real providers.
 
 <Cards>
-  <Card title={<><Server className="inline w-5 h-5 mr-2" />API Server</>}>
-    Notification API - Port 3000
+  <Card title={<><Radio className="inline w-5 h-5 mr-2" />Add Integrations</>} href="/docs/core/notification-templates">
+    Configure providers like SendGrid, Twilio, or WhatsApp.
   </Card>
-  <Card title={<><BarChart className="inline w-5 h-5 mr-2" />Admin Dashboard</>}>
-    Monitoring & management - Port 3002
+  <Card title={<><BookOpen className="inline w-5 h-5 mr-2" />Core Concepts</>} href="/docs/core/core-concepts">
+    Learn about the underlying architecture and mental model.
   </Card>
-  <Card title={<><TrendingUp className="inline w-5 h-5 mr-2" />Grafana</>}>
-    Log visualization - Port 3001
-  </Card>
-  <Card title={<><MessageSquare className="inline w-5 h-5 mr-2" />Kafka UI</>}>
-    Kafka topic monitoring - Port 8080
+  <Card title={<><Server className="inline w-5 h-5 mr-2" />Production Deployment</>} href="/docs/core/self-hosting">
+    Guide for scaling SimpleNS across multiple nodes.
   </Card>
 </Cards>
-
----
-
-## Production Deployment
-
-For production environments, see the [Self-Hosting Guide](./self-hosting) which covers:
-- Split Docker Compose files for flexibility
-- Distributed deployments across multiple hosts
-- Cloud infrastructure integration
-- Security hardening

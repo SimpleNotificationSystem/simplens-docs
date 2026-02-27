@@ -79,6 +79,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
   <Accordion title="Cannot Login">
     - Verify `ADMIN_PASSWORD` in `.env`.
     - Ensure `AUTH_SECRET` is set.
+    - Check if `HTTPS_COOKIE=true` while using an HTTP connection (e.g., local development). Set `HTTPS_COOKIE=false` in `.env` if not using HTTPS.
     - Clear browser cookies for `localhost:3002`.
   </Accordion>
   

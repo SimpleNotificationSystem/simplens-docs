@@ -1,21 +1,21 @@
 {
   "root": true,
   "pages": [
-    "---Getting Started & Installation---",
+    "---Getting Started---",
     "index",
     "getting-started",
-    "self-hosting",
-    "local-development",
-    "---Architecture & Concepts---",
     "architecture",
     "core-concepts",
-    "---API & Features---",
-    "api-reference",
-    "notification-templates",
-    "admin-dashboard",
-    "admin-alert-channels",
-    "---Operations---",
+    "---Running in Production---",
+    "self-hosting",
     "configuration",
+    "observability",
+    "---Features---",
+    "admin-alert-channels",
+    "notification-templates",
+    "---Reference---",
+    "api-reference",
+    "admin-dashboard",
     "troubleshooting"
   ]
 }

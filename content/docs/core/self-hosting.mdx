@@ -36,7 +36,7 @@ SimpleNS uses a split architecture that separates **application services** from 
 
 ## Customizing Infrastructure
 
-The onboarding scripts let you choose which infrastructure services to deploy with Docker. This gives you flexibility to use managed cloud services for some components while self-hosting others.
+The `@simplens/onboard` cli tool lets you to choose which infrastructure services to deploy with Docker. This gives you flexibility to use managed cloud services for some components while self-hosting others.
 
 ### Selective Infrastructure Services
 
@@ -46,10 +46,11 @@ During onboarding, you can select which services to deploy:
 |:---|:---|:---|
 | **MongoDB** | Primary database | Yes |
 | **Kafka** | Message queue for notifications | Yes |
-| **Kafka UI** | Web dashboard for Kafka monitoring | Yes |
+| **Kafka UI** | Web dashboard for Kafka monitoring | No |
 | **Redis** | Caching and delay queue | Yes |
 | **Loki** | Log aggregation | No |
 | **Grafana** | Observability dashboard | No |
+| **Nginx** | Reverse proxy server needed when `BASE_PATH` is configured | No |
 
 ### Using Managed/External Services
 
@@ -180,14 +181,32 @@ For detailed configuration of all environment variables, see the [Configuration 
 
 ---
 
-## Deployment Scenarios
+## Deployment Configurations
 
-<Tabs items={['Single Machine', 'Cloud Infrastructure']}>
-  <Tab value="Single Machine">
-    **All services on one machine using self-hosted infrastructure.**
+SimpleNS is designed to scale from a single Raspberry Pi to a multi-node Kubernetes cluster. How you deploy depends on your expected volume and whether you want to manage stateful databases yourself.
+
+### Hardware Requirements
+
+| Environment | Minimum Resources | Recommended Resources |
+|:---|:---|:---|
+| **Development (Devcontainer)** | 4 CPU Cores, 6GB RAM | 8 CPU Cores, 8GB RAM |
+| **Production (All-in-one)** | 2 CPU Cores, 2GB RAM | 4 CPU Cores, 4GB RAM |
+| **Production (App Only)** | 1 CPU Core, 1GB RAM | 2 CPU Cores, 2GB RAM + Managed DBs |
+
+<Callout type="info">
+Kafka and MongoDB are the most resource-intensive components when self-hosting the full stack.
+</Callout>
+
+### Choose Your Setup
+
+<Tabs items={['All-in-one Docker', 'App Only (Managed DBs)', 'Distributed Cluster']}>
+  <Tab value="All-in-one Docker">
+    **Best for:** Side-projects, staging environments, and low-volume production (&lt;100k events/day).
+
+    This setup runs both the Application and Infrastructure locally on a single machine.
     
     ```bash title=".env"
-    # Leave INFRA_HOST unset (uses host.docker.internal)
+    # Ensure MONGO, KAFKA, and REDIS point to your local docker networks
     MONGO_URI=mongodb://host.docker.internal:27017/simplens?replicaSet=rs0
     BROKERS=host.docker.internal:9092
     REDIS_URL=redis://host.docker.internal:6379
@@ -195,58 +214,26 @@ For detailed configuration of all environment variables, see the [Configuration 
     ```
     
     ```bash
-    # Start both compose files
+    # Step 1: Start Infrastructure (DBs, Queues)
     docker-compose -f docker-compose.infra.yaml up -d
+
+    # Step 2: Start Application Services
     docker-compose up -d
     ```
   </Tab>
   
-  {/* <Tab value="Distributed">
-    **Infrastructure and applications on separate machines.**
-    
-    **On Infrastructure Host (e.g., 192.168.1.100):**
-    
-    ```bash title=".env on infrastructure machine"
-    INFRA_HOST=192.168.1.100
-    ```
-    
-    ```bash
-    docker-compose -f docker-compose.infra.yaml up -d
-    ```
-    
-    **On Application Host:**
-    
-    ```bash title=".env on application machine"
-    MONGO_URI=mongodb://192.168.1.100:27017/simplens?replicaSet=rs0
-    BROKERS=192.168.1.100:9092
-    REDIS_URL=redis://192.168.1.100:6379
-    LOKI_URL=http://192.168.1.100:3100
-    ```
-    
-    ```bash
-    docker-compose up -d
-    ```
-    
-    <Callout type="warn">
-    Ensure firewall rules allow traffic on ports 27017, 9092, 6379, and 3100 between hosts.
-    </Callout>
-  </Tab> */}
-  
-  <Tab value="Cloud Infrastructure">
-    **Use managed cloud services instead of self-hosting.**
+  <Tab value="App Only (Managed DBs)">
+    **Best for:** Most production workloads. You run the stateless Node.js services, while handing off database maintenance to cloud providers.
     
     ```bash title=".env"
     # MongoDB Atlas
     MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/simplens?retryWrites=true
     
-    # Confluent Cloud Kafka
+    # Confluent Cloud Kafka / AWS MSK
     BROKERS=kafka-broker.cloud-provider.com:9092
     
-    # Redis Cloud
+    # Redis Cloud / AWS ElastiCache
     REDIS_URL=redis://user:pass@redis.cloud-provider.com:6379
-    
-    # Grafana Cloud Loki (or skip)
-    LOKI_URL=http://loki.cloud-provider.com:3100
     ```
     
     ```bash
@@ -254,9 +241,21 @@ For detailed configuration of all environment variables, see the [Configuration 
     docker-compose up -d
     ```
     
-    <Callout type="info">
-    When using cloud infrastructure, you don't need `docker-compose.infra.yaml` at all.
+    <Callout type="tip">
+    With this setup, you completely ignore `docker-compose.infra.yaml`.
     </Callout>
+  </Tab>
+
+  <Tab value="Distributed Cluster">
+    **Best for:** High availability and massive throughput.
+
+    You deploy infrastructure on dedicated nodes (or managed services), and spread Application workers across multiple machines behind a load balancer.
+
+    1. **API Nodes**: Scale `api` container horizontally behind NGINX/ALB.
+    2. **Processor Nodes**: Deploy `notification_processor` on separate servers tailored to target specific channels using `PROCESSOR_CHANNEL=email`.
+    3. **Background Nodes**: Run `worker` and `delayed_processor` on background compute.
+
+    Ensure you adjust your `*_PARTITION` environment variables *before* creation to support the number of parallel processor instances you plan to run.
   </Tab>
 </Tabs>
 
