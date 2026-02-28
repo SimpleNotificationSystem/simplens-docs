@@ -283,7 +283,7 @@ const DashboardVisual = () => (
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="w-full max-w-[180px] rounded-lg bg-zinc-900 border border-zinc-700/50 overflow-hidden"
+            className="w-full max-w-45 rounded-lg bg-zinc-900 border border-zinc-700/50 overflow-hidden"
         >
             {/* Header bar */}
             <div className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-800/50 border-b border-zinc-700/50">
@@ -339,7 +339,7 @@ const BentoCard = ({ title, description, visual, size = "default", delay = 0 }: 
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.5, delay }}
             className={cn(
-                "group relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 p-6 transition-all duration-300 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5 flex flex-col items-center justify-center text-center",
+                "relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 p-6 flex flex-col items-center justify-center text-center",
                 size === "large" && "md:col-span-1 md:row-span-2",
                 size === "wide" && "md:col-span-2"
             )}

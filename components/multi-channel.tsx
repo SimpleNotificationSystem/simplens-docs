@@ -35,9 +35,9 @@ const ChannelCard = ({ icon, title, providers, delay = 0 }: ChannelCardProps) =>
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay }}
-            className="group rounded-xl border border-white/10 bg-zinc-900/50 p-5 transition-all duration-300 hover:border-blue-500/30 hover:bg-zinc-900 flex justify-center items-center flex-col"
+            className="rounded-xl border border-white/10 bg-zinc-900/50 p-5 flex justify-center items-center flex-col"
         >
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 transition-transform duration-300 group-hover:scale-110">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
                 {icon}
             </div>
             <h3 className="mb-2 text-lg font-semibold text-white">{title}</h3>

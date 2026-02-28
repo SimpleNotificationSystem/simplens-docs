@@ -79,7 +79,7 @@ const EventsVisual = () => (
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="w-full max-w-[140px] space-y-2"
+            className="w-full max-w-35 space-y-2"
         >
             {/* Search bar */}
             <motion.div
@@ -217,7 +217,7 @@ const StudioVisual = () => (
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="w-full max-w-[160px] rounded-lg bg-zinc-900 border border-zinc-800 overflow-hidden"
+            className="w-full max-w-40 rounded-lg bg-zinc-900 border border-zinc-800 overflow-hidden"
         >
             {/* Header */}
             <div className="flex items-center gap-1.5 px-2 py-1.5 bg-zinc-800/50 border-b border-zinc-800">
@@ -268,7 +268,7 @@ const FeatureCard = ({ icon, title, description, visual, delay = 0 }: FeatureCar
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay }}
-            className="group rounded-2xl border border-white/10 bg-zinc-950 p-5 transition-all duration-300 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5"
+            className="rounded-2xl border border-white/10 bg-zinc-950 p-5"
         >
             {/* Visual */}
             {visual}

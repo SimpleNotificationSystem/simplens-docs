@@ -131,7 +131,7 @@ const BatchProcessingVisual = () => (
             { width: "60%", delay: 0.4, color: "from-green-500 to-green-600" },
             { width: "90%", delay: 0.6, color: "from-purple-500 to-purple-600" },
         ].map((bar, i) => (
-            <div key={i} className="w-full max-w-[140px] h-4 rounded bg-zinc-800 overflow-hidden">
+            <div key={i} className="w-full max-w-35 h-4 rounded bg-zinc-800 overflow-hidden">
                 <motion.div
                     initial={{ width: 0 }}
                     whileInView={{ width: bar.width }}
@@ -219,7 +219,7 @@ const UseCaseCard = ({ icon, title, description, visual, delay = 0 }: UseCaseCar
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay }}
-            className="group rounded-2xl border border-white/10 bg-zinc-950 p-6 transition-all duration-300 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5"
+            className="rounded-2xl border border-white/10 bg-zinc-950 p-6"
         >
             {/* Visual */}
             {visual}

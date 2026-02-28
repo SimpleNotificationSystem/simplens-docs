@@ -122,7 +122,7 @@ export const FAQSection = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: 0.2 }}
-                    className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6 md:p-8"
+                    className="rounded-2xl border border-zinc-800 bg-zinc-900/50 px-4 p-6 md:p-8"
                 >
                     {faqs.map((faq, index) => (
                         <FAQItem
@@ -149,14 +149,14 @@ export const FAQSection = () => {
                     <div className="flex flex-wrap items-center justify-center gap-4">
                         <Link
                             href="/docs/core"
-                            className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-blue-500 hover:text-white"
+                            className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-neutral-500 hover:text-white"
                         >
                             <BookOpen className="h-4 w-4" />
                             Read the Docs
                         </Link>
                         <Link
                             href="https://github.com/SimpleNotificationSystem/simplens-core/issues"
-                            className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-blue-500 hover:text-white"
+                            className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-neutral-500 hover:text-white"
                         >
                             <Github className="h-4 w-4" />
                             GitHub Issues

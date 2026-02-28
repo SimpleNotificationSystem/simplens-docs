@@ -313,7 +313,7 @@ const WhoCard = ({ icon, title, description, visual, delay = 0 }: WhoCardProps) 
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay }}
-            className="group rounded-2xl border border-white/10 bg-zinc-950 p-6 transition-all duration-300 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5"
+            className="rounded-2xl border border-white/10 bg-zinc-950 p-6"
         >
             {/* Visual */}
             {visual}
@@ -334,26 +334,26 @@ export function WhoIsThisForSection() {
     const cards = [
         {
             icon: <Server className="h-5 w-5" />,
-            title: "Multiple Providers",
-            description: "You manage multiple notification API providers (SendGrid, Twilio, WhatsApp, etc.).",
+            title: "You Manage Multiple Providers",
+            description: "You work with multiple notification API providers (SendGrid, Twilio, WhatsApp, etc.).",
             visual: <ProvidersVisual />,
         },
         {
             icon: <ReplaceAll className="h-5 w-5" />,
-            title: "Manual Retries",
-            description: "You manually re-send failed emails or messages due to transient errors.",
+            title: "You're Tired of Manual Retries",
+            description: "You find yourself manually re-sending failed emails or messages due to transient errors.",
             visual: <RetriesVisual />,
         },
         {
             icon: <Share2 className="h-5 w-5" />,
-            title: "Scattered Logic",
-            description: "Your retry and scheduling logic is scattered inconsistently across your microservices.",
+            title: "You Have Scattered Logic Across Microservices",
+            description: "You struggle with retry and scheduling logic scattered inconsistently across your microservices.",
             visual: <ScatteredLogicVisual />,
         },
         {
             icon: <ShieldCheck className="h-5 w-5" />,
-            title: "Self-Hosted Control",
-            description: "You want full self-hosted control of your data instead of expensive SaaS lock-in.",
+            title: "You Need Self-Hosted Control",
+            description: "You want full self-hosted control of your data instead of being locked into expensive SaaS solutions.",
             visual: <SelfHostedVisual />,
         },
     ]
