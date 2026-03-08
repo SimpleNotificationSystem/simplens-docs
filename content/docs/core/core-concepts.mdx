@@ -208,6 +208,19 @@ Non-retryable errors trigger the **fallback provider** logic if one is configure
 </Tab>
 </Tabs>
 
+### Fallback and Retry-Budget Handoff
+
+SimpleNS uses two fallback mechanisms with different triggers:
+
+1. **Immediate fallback**: On non-retryable provider error, router can try fallback provider immediately in the same attempt.
+2. **Retry-budget handoff**: On retryable/rate-limit paths, when `retry_count + 1 > MAX_RETRY_COUNT`, unified consumer can hand off to fallback provider asynchronously.
+
+Handoff details:
+
+- Handoff publishes a new delayed event with fallback `provider` and `retry_count = 0`.
+- This creates an independent retry budget for the fallback provider.
+- If no valid distinct fallback exists (or schema validation fails), notification follows terminal failure flow.
+
 ### Retry Flow
 
 <Steps>
@@ -232,7 +245,8 @@ If `retry_count < MAX_RETRY_COUNT` and error is retryable:
 
 <Step>
 Else:
-- Mark notification as `failed`
+- If a valid distinct fallback exists, schedule fallback handoff with `retry_count = 0`
+- Otherwise mark notification as `failed`
 - Update idempotency cache in Redis
 - Admin can manually retry from dashboard
 </Step>

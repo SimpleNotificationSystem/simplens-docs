@@ -176,14 +176,15 @@ MAX_RETRY_COUNT=5
 PROCESSING_TTL_SECONDS=120
 ```
 
-**Fallback Provider Logic:**
-1. Try default provider for channel
-2. If fails with **non-retryable error**, validate against fallback provider schema
-3. If validation passes, try fallback provider
-4. If fallback fails or both fail, mark as `failed`
+#### Provider Fallback (Quick Rule)
+
+1. Try the default (or explicit) provider.
+2. If the error is **non-retryable**, validate against fallback schema.
+3. If valid, try fallback provider immediately.
+4. If both fail, mark as `failed`.
 
 <Callout type="info">
-If the error is **retryable** (e.g., rate limit, timeout), SimpleNS retries with the same provider using exponential backoff instead of falling back.
+Retryable errors (for example rate limit or timeout) do not use immediate fallback first. They follow retry/backoff and may hand off to fallback only after retry budget is exhausted.
 </Callout>
 
 **Data Flow:**
@@ -212,6 +213,72 @@ flowchart TD
     style K fill:#f59e0b,stroke:#d97706,color:#fff
 "/>
 
+#### Fallback Routing Modes
+
+SimpleNS applies two separate fallback mechanisms:
+
+<Mermaid
+  chart="
+flowchart TD
+    A[Provider Attempt] --> B{Error Type?}
+    B -->|Non-retryable| C[Immediate Fallback<br/>sendWithFallback]
+    B -->|Retryable or Rate-Limited| D{retry_count + 1 > MAX_RETRY_COUNT?}
+    D -->|No| E[Backoff + Delayed Retry<br/>Same Provider]
+    D -->|Yes| F[Retry-Budget Handoff<br/>scheduleFallbackProviderHandoff]
+
+    style C fill:#22c55e,stroke:#16a34a,color:#fff
+    style E fill:#f59e0b,stroke:#d97706,color:#fff
+    style F fill:#3b82f6,stroke:#2563eb,color:#fff
+"/>
+
+#### How Fallback Provider Is Resolved
+
+Fallback resolution is guarded to avoid circular routing:
+
+<Mermaid
+  chart="
+flowchart TD
+    A[Resolve Fallback for Channel] --> B{channelConfig.fallback set?}
+    B -->|Yes| C[Use Configured Fallback]
+    B -->|No| D[Use 2nd Registered Provider]
+    C --> E{fallback == currentProvider?}
+    D --> E
+    E -->|Yes| F[No Handoff / No Immediate Fallback]
+    E -->|No| G[Use Distinct Fallback Provider]
+
+    style F fill:#ef4444,stroke:#dc2626,color:#fff
+    style G fill:#22c55e,stroke:#16a34a,color:#fff
+"/>
+
+#### Delayed Re-Entry After Handoff
+
+Handoff is asynchronous and re-enters through the delayed pipeline:
+
+<Mermaid
+  chart="
+flowchart LR
+    A[Unified Consumer<br/>publishDelayed] --> B[delayed_notification Topic]
+    B --> C[Delayed Consumer]
+    C --> D[Redis Delayed Queue]
+    D --> E[Delayed Poller Claims Due Event]
+    E --> F[Target Producer]
+    F --> G[channel_notification Topic]
+    G --> H[Unified Consumer Reprocesses<br/>provider=fallback, retry_count=0]
+
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style D fill:#3b82f6,stroke:#2563eb,color:#fff
+    style H fill:#22c55e,stroke:#16a34a,color:#fff
+"/>
+
+#### Offset Commit Semantics
+
+When handoff is scheduled successfully:
+
+- Unified consumer returns success for the current Kafka message.
+- Offset is committed.
+- Continuation is represented by the new delayed event.
+
+If handoff cannot be scheduled, terminal failure handling is used.
 
 ### Delayed Processor
 

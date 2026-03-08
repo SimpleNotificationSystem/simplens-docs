@@ -83,10 +83,11 @@ Run this command in your terminal to start the `@simplens/onboard` cli tool
 
 The installer will create the following files:
   - `docker-compose.yaml`: Contains the application services
-  - `docker-compose.infra.yaml`: Contains the infrastructure services like `mongo`, `kafka`, `redis`, `loki` and `grafana`. (These services are customizable in the `@simplens/onboard` tool. `docker-compose.infra.yaml` file is optional as it will not be created if you don't want any infra services to run.)
+  - `docker-compose.infra.yaml`: Contains the infrastructure services like `mongo`, `kafka`, `redis`, `loki` and `grafana`. (These services are customizable in the `@simplens/onboard` tool. `docker-compose.infra.yaml` file is optional as it will not be created if you don't want any infra services to run. It is automatically created when SSL is enabled.)
   - `.env`: Contains the environmental variables
   - `simplens.config.yaml`: Contains the configurations for simplens plugins
-  - `nginx.conf`: An optional nginx configuration file if `BASE_PATH` is enabled and configured in the `@simplens/onboard` cli tool
+  - `nginx.conf`: An optional nginx configuration file if `BASE_PATH` is enabled and configured in the `@simplens/onboard` cli tool, or when SSL is enabled
+  - `nginx.ssl.conf`: Generated when SSL is enabled and services are not auto-started; this is the final HTTPS Nginx config used after certificate issuance
 
 ### Step 2: Verify Health
 
@@ -169,12 +170,146 @@ You've successfully deployed SimpleNS and sent your first notification.
 
 ---
 
+## Automatic HTTPS (Let's Encrypt)
+
+`@simplens/onboard` can automatically configure HTTPS using Nginx + Certbot with Let's Encrypt HTTP-01 challenge.
+
+### Flags
+
+- `--ssl`: Enable SSL automation.
+- `--ssl-domain <domain>`: Public FQDN used for certificate issuance.
+- `--ssl-email <email>`: Email used for Let's Encrypt registration.
+
+Domain and email are validated before setup:
+
+- Domain must be a valid public FQDN (no protocol, path, wildcard, query, or port).
+- Email must be a valid email format.
+
+### Mode Behavior
+
+<Tabs items={['Interactive', '--full']}>
+  <Tab value="Interactive">
+    In interactive mode (without `--full`):
+
+    - If `--ssl` is not passed, onboard asks whether to enable automatic SSL.
+    - If enabled, onboard prompts for domain and email.
+    - Onboard asks whether to start services immediately.
+
+    If you choose to start now, onboard performs the SSL bootstrap flow automatically:
+
+    1. Starts Nginx with a bootstrap `nginx.conf` for ACME challenge.
+    2. Requests the first certificate with Certbot webroot mode.
+    3. Switches to final SSL-enabled `nginx.conf` and reloads Nginx.
+    4. Starts `certbot-renew` for periodic renewals (12h check interval).
+  </Tab>
+
+  <Tab value="--full">
+    In `--full` mode:
+
+    - No interactive prompts are shown.
+    - `--ssl-domain` and `--ssl-email` are required when `--ssl` is set.
+    - Missing or invalid values fail fast during CLI validation.
+    - Services are not auto-started by design.
+
+    Onboard generates all files and prints the manual SSL runbook commands.
+  </Tab>
+</Tabs>
+
+### Prerequisites for Certificate Issuance
+
+Before running SSL issuance, make sure:
+
+1. Your domain is registered.
+2. An `A` record points your domain to this machine public IP.
+3. Ports `80` and `443` are open and reachable from the internet.
+
+### Quick Examples
+
+Interactive SSL setup:
+
+```bash
+npx @simplens/onboard --infra --env interactive
+# then enable SSL in the prompt flow
+```
+
+Non-interactive SSL setup (`--full`):
+
+```bash
+npx @simplens/onboard \
+  --full \
+  --infra mongo kafka redis nginx \
+  --env default \
+  --ssl \
+  --ssl-domain app.example.com \
+  --ssl-email ops@example.com
+```
+
+### Manual SSL Runbook
+
+When services are not auto-started (for example in `--full` mode), run:
+
+```bash
+# 1) Start infra services (includes nginx bootstrap config)
+docker compose -f docker-compose.infra.yaml up -d
+
+# 2) Start application services
+docker compose up -d
+
+# 3) Request certificate
+docker compose -f docker-compose.infra.yaml run --rm --no-deps --entrypoint certbot certbot certonly --webroot -w /var/www/certbot --email <email> --agree-tos --no-eff-email -d <domain> --non-interactive
+
+# 4) Swap config file
+# Windows:
+copy /Y nginx.ssl.conf nginx.conf
+# Linux/macOS:
+cp nginx.ssl.conf nginx.conf
+
+# 5) Reload nginx
+docker compose -f docker-compose.infra.yaml exec -T nginx nginx -s reload
+
+# 6) Start renewal service
+docker compose -f docker-compose.infra.yaml up -d certbot-renew
+```
+
+<Callout type="info">
+Automated compose execution in onboard attempts `docker compose` and falls back to `docker-compose` if needed. Manual instructions are printed using `docker compose` commands.
+</Callout>
+
+### Troubleshooting
+
+Common validation failure in `--full` mode:
+
+```bash
+npx @simplens/onboard --full --env default --ssl --ssl-domain app.example.com --ssl-email ops@example.com
+```
+
+If certificate issuance fails, check:
+
+```bash
+docker compose -f docker-compose.infra.yaml ps
+docker compose -f docker-compose.infra.yaml logs nginx
+docker compose -f docker-compose.infra.yaml run --rm --no-deps --entrypoint certbot certbot certificates
+```
+
+If Nginx reload fails, check:
+
+```bash
+docker compose -f docker-compose.infra.yaml exec -T nginx nginx -t
+```
+
+And verify cert paths in `nginx.conf` under:
+
+- `/etc/letsencrypt/live/<domain>/fullchain.pem`
+- `/etc/letsencrypt/live/<domain>/privkey.pem`
+
+---
+
 ## Next Steps
 
 Now that you have the core system running, explore adding real providers.
 
 <Cards>
-  <Card title={<><Radio className="inline w-5 h-5 mr-2" />Add Integrations</>} href="/docs/core/notification-templates">
+  <Card title={<><Radio className="inline w-5 h-5 mr-2" />Add Integrations</>} href="/docs/plugins">
     Configure providers like SendGrid, Twilio, or WhatsApp.
   </Card>
   <Card title={<><BookOpen className="inline w-5 h-5 mr-2" />Core Concepts</>} href="/docs/core/core-concepts">

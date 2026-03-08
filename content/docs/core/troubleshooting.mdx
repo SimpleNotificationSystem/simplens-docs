@@ -65,6 +65,24 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
     - **Action:** Fix credential, then use **Dashboard > Failed Events > Retry**.
   </Accordion>
 
+  <Accordion title="Fallback handoff not happening after retries exhausted">
+    **Retry budget is exceeded but provider is not switched.**
+
+    1. **Verify fallback exists:** Ensure channel fallback is configured or at least two providers are registered for the channel.
+    2. **Verify provider differs:** Fallback provider must not be the same as current provider.
+    3. **Check schema compatibility:** Payload must validate against fallback provider schema.
+    4. **Search logs:** Look for `Fallback handoff validation failed`, `Retry budget exhausted for provider`, or `Fallback provider is same as current provider`.
+  </Accordion>
+
+  <Accordion title="Fallback handoff scheduled but never retried">
+    **Provider switch appears in logs, but notification never resumes.**
+
+    1. **Delayed consumer:** Confirm delayed consumer is healthy.
+    2. **Redis queue:** Check delayed queue growth and due-event drain.
+    3. **Delayed poller:** Check poller publish errors.
+    4. **Kafka topics:** Confirm target channel topic exists and is writable.
+  </Accordion>
+
   <Accordion title="Scheduled Notifications Not Sending">
     **Time passed but still pending.**
     
