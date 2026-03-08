@@ -32,6 +32,11 @@ SimpleNS uses a split architecture that separates **application services** from 
 |:---|:---|:---|
 | `docker-compose.yaml` | Application services (API, processors, dashboard) | Always required |
 | `docker-compose.infra.yaml` | Infrastructure (MongoDB, Kafka, Redis, Loki, Grafana) | Only if self-hosting infrastructure |
+
+<Callout type="info">
+SimpleNS can also be hosted easily on cloud providers using prebuilt Terraform templates: [SimpleNS Terraform Templates](https://github.com/SimpleNotificationSystem/simplens-terraform-templates).
+</Callout>
+
 ---
 
 ## Customizing Infrastructure
