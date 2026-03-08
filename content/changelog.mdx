@@ -1,8 +1,55 @@
 ---
 releases:
+  - version: "1.2.1"
+    date: "March 8, 2026"
+    tag: "Latest"
+    description: "Release focused on SSL automation and setup guidance, fallback provider resiliency, onboarding and dashboard quality improvements, MCP packaging and API compatibility, and validation hardening."
+    dockerImages:
+      - "ghcr.io/simplenotificationsystem/simplens-core:1.2.1"
+      - "ghcr.io/simplenotificationsystem/simplens-dashboard:1.2.1"
+    features:
+      - category: "Versioning & Releases"
+        items:
+          - "Updated dashboard version to 1.2.1 in package.json and package-lock.json"
+          - "Updated service/package versions through 1.0.9, 1.0.10, and 1.0.11 across package.json and package-lock.json"
+          - "Published MCP server as npm package (@simplens/mcp) supporting stdio and streamable-http modes"
+      - category: "SSL, Infrastructure & Onboarding"
+        items:
+          - "Implemented SSL automation with Certbot for improved secure setup"
+          - "Enhanced SSL setup instructions with clearer, step-by-step guidance"
+          - "Improved SSL domain/email validation in @simplens/onboard"
+          - "Standardized Docker command syntax across templates, README, and setup flow"
+          - "Improved Nginx configuration handling and related infra path updates"
+          - "Added logs-data volume for improved logging data management"
+      - category: "Reliability & Fallback Handling"
+        items:
+          - "Enhanced fallback provider behavior when retry budget is exceeded"
+          - "Updated sendWithFallback to leverage default provider ID during fallback"
+          - "Improved fallback flow to prevent redundant retries and provide better error logging"
+      - category: "Dashboard, MCP & Developer Experience"
+        items:
+          - "Updated dashboard middleware to allow MCP server /api requests via authorization header checks"
+          - "Improved sidebar scrolling UX with scroll area support and visual separation"
+          - "Added HTTPS_COOKIE variable to control secure cookie behavior over HTTP/HTTPS"
+          - "Expanded MCP tool descriptions with usage examples"
+          - "Removed extra console logs for stdio and streamable-http paths"
+      - category: "Docs & Workflow"
+        items:
+          - "Updated README files (core, dashboard, and mcp) including tagline/badges refresh and content cleanup"
+          - "Updated release workflow to enforce lowercase dashboard/core image naming"
+          - "Disabled package selection in edit mode"
+    bugFixes:
+      - "Enhanced notification schema validation to require non-empty channel and at least one of template_id or content"
+      - "Fixed simplens MCP server request routing to dashboard API"
+      - "Set secure cookie default to true when env variable is missing"
+      - "Fixed dashboard build error related to secure handling"
+      - "Added onboard env overrides for CORE_VERSION and DASHBOARD_VERSION"
+      - "Stopped enforcing LOKI_URL when Loki is not selected"
+      - "Auto-generated NS_API_KEY, AUTH_SECRET, CORE_VERSION, and DASHBOARD_VERSION when omitted"
+      - "Fixed Nginx configuration path and removed unused environment variable"
+
   - version: "1.2.0"
     date: "February 24, 2026"
-    tag: "Latest"
     description: "Notification templates with Monaco editor, dashboard navigation tour, glassmorphism UI enhancements, Bruno API docs, and comprehensive testing improvements."
     dockerImages:
       - "ghcr.io/simplenotificationsystem/simplens-core:1.2.0"
@@ -119,4 +166,4 @@ Each release entry contains:
 - **description**: Brief summary
 - **dockerImages**: Docker image tags
 - **features**: Grouped feature highlights
-- *bugFixes**: List of bug fxies (optional)
+- **bugFixes**: List of bug fixes (optional)
