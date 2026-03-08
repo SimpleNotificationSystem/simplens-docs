@@ -38,4 +38,4 @@ catch {
 }
 
 Write-Host "[INFO] Running SimpleNS Onboarding..." -ForegroundColor Cyan
-npx @simplens/onboard
+npx -y @simplens/onboard@latest

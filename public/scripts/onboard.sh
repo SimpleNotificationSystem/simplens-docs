@@ -71,7 +71,7 @@ main() {
     if command -v node &> /dev/null; then
         echo -e "${GREEN}[OK] Node.js is installed ($(node -v))${NC}"
         echo "[INFO] Running SimpleNS Onboarding..."
-        npx @simplens/onboard
+        npx -y @simplens/onboard@latest
     else
         echo -e "${RED}[ERROR] Node.js installation failed.${NC}"
         exit 1
