@@ -87,7 +87,7 @@ export default function MCPPage() {
                             className="text-xl text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed"
                             variants={heroVariants}
                         >
-                            Connect your SimpleNS instance directly to Claude, Cursor, and VS Code
+                            Connect your SimpleNS instance directly to Antigravity, Codex, and VS Code
                         </motion.p>
 
                         <motion.div
